@@ -57,3 +57,7 @@ func (rd *RawData) UnmarshalEntry(reader io.Reader) error {
 	rd.data = buf
 	return nil
 }
+
+func (rd *RawData) GetValue() []byte {
+	return rd.data
+}

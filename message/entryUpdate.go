@@ -38,15 +38,26 @@ func (m EntryUpdate) EntryID() uint16 {
 }
 
 //NewEntryUpdate creates a new instance on EntryUpdate.
-func NewEntryUpdate(id, sn [2]byte, entrier entryType.Entrier) *EntryUpdate {
-	return &EntryUpdate{
+func NewEntryUpdate(id, sn uint16, entrier entryType.Entrier) *EntryUpdate {
+	idBuf := make([]byte, 2)
+	binary.LittleEndian.PutUint16(idBuf, id)
+
+	snBuf := make([]byte, 2)
+	binary.LittleEndian.PutUint16(snBuf, sn)
+
+	eu := &EntryUpdate{
 		message: message{
 			mType: MTypeEntryUpdate,
 		},
-		entryID: id,
-		entrySN: sn,
+		//entryID: idBuf,
+		//entrySN: snBuf,
 		entrier: entrier,
 	}
+
+	copy(eu.entryID[:], idBuf)
+	copy(eu.entrySN[:], snBuf)
+
+	return eu
 }
 
 //MarshalMessage implements Marshaler for Network Table Messages.

@@ -14,7 +14,7 @@ package goNTCore
 ////type NetworkTabler interface {
 ////	ContainsKey(key string) bool
 ////	ContainsTable(key string) bool
-////	Delete(key string)
+////	DeleteID(key string)
 ////	DeleteAll()
 ////	IsPersisted(key string) bool
 ////	GetKeys() []string
@@ -66,8 +66,8 @@ package goNTCore
 //	return t.data.IsTable(key)
 //}
 //
-////Delete deletes the given key from the table.
-//func (t *DataTable) Delete(key string) {
+////DeleteID deletes the given key from the table.
+//func (t *DataTable) DeleteID(key string) {
 //	key = t.getKey(key)
 //	t.data.DeleteEntry(key) // nolint: errcheck
 //}

@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"time"
 )
 
 func main() {
@@ -19,6 +20,14 @@ func main() {
 
 	log.Printf("--- Client Started ---\n\n")
 	defer c.Close()
+
+	time.Sleep(2 * time.Second)
+
+	c.PutBoolean("newEntry", true)
+
+	time.Sleep(2 * time.Second)
+
+	c.PutBoolean("newEntry", false)
 
 	ctrlc := make(chan os.Signal)
 	signal.Notify(ctrlc, os.Interrupt)

@@ -6,6 +6,7 @@ package goNTCore
 
 import (
 	"fmt"
+	"github.com/technomancers/goNTCore/cache"
 	"github.com/technomancers/goNTCore/entryType"
 	"io"
 	"log"
@@ -37,47 +38,24 @@ const (
 	ClientReady
 )
 
-type DataMap map[string]CacheEntry
-
-type CacheEntry struct {
-	entryName       string
-	entryID         uint16 //[2]byte
-	entrySN         uint16 //[2]byte
-	entryPersistent bool
-	entry           entryType.Entrier
-}
-
-func NewCacheEntryFromEntryAssign(ea *message.EntryAssign) CacheEntry {
-	return CacheEntry{
-		entryName:       ea.GetName(),
-		entryID:         ea.EntryID(),
-		entrySN:         ea.EntrySN(),
-		entryPersistent: ea.EntryPersistent(),
-		entry:           ea.Entry(),
-	}
-}
-
-func UpdateCacheWithEntryUpdate(entry CacheEntry, m *message.EntryUpdate) CacheEntry {
-	entry.entrySN = m.EntrySN()
-	entry.entry = m.Entry()
-	return entry
-}
-
 //Client is a Network Table client.
 type Client struct {
 	net.Conn
 	connected bool
 	name      string
 	status    ClientStatus
-	data      DataMap
+	cache     *cache.NetworkTable
 
 	// we should not modify seedData
 	// Optionally passed in to ensure the keys exist
-	seedData DataMap
+	seedData *cache.NetworkTable
 }
 
 //NewClient creates a new client to communicate to a Network Table server.
-func NewClient(serverHost string, name string, data DataMap) (*Client, chan error, error) {
+// serverHost should be an IP address or hostname eg: localhost, 127.0.0.1, roborio-4909-frc.local
+// name is used to identify this client with the networktables server. Generally want to keep it short, most implementations ignore the value
+// data is optional. One can pass a table with existing data the client wants to ensure the server has
+func NewClient(serverHost string, name string, data *cache.NetworkTable) (*Client, chan error, error) {
 	//log.Printf("Connecting to %s", net.JoinHostPort(serverHost, strconv.Itoa(PORT)))
 	conn, err := net.Dial("tcp", net.JoinHostPort(serverHost, strconv.Itoa(PORT)))
 	if err != nil {
@@ -88,8 +66,8 @@ func NewClient(serverHost string, name string, data DataMap) (*Client, chan erro
 		connected: true,
 		name:      name,
 		status:    ClientDisconnected,
-		data:      make(DataMap),
-		seedData:  copyDataMap(data),
+		cache:     cache.NewNetworkTable(),
+		seedData:  data,
 	}
 	echan := make(chan error, 1)
 	go c.readIncoming(echan)
@@ -108,21 +86,22 @@ func (c *Client) Close() error {
 	return c.Conn.Close()
 }
 
-//SendMsg to the connected server
+// SendMsg to the connected server
+// Users will generally want to use the higher level accessor methods Get* and Put*
 func (c *Client) SendMsg(msg message.Messager) error {
 	log.Printf("<=== Sent %s", msg)
 	return SendMsg(msg, c)
 }
 
-func copyDataMap(origMap DataMap) DataMap {
-	newMap := make(DataMap)
-
-	for k, v := range origMap {
-		newMap[k] = v
-	}
-
-	return newMap
-}
+//func copyDataMap(origMap DataMap) DataMap {
+//	newMap := make(DataMap)
+//
+//	for k, v := range origMap {
+//		newMap[k] = v
+//	}
+//
+//	return newMap
+//}
 
 //Listen for messages sent from the server.
 //Best to start this in a go routine.
@@ -169,7 +148,7 @@ func (c *Client) handler(msg message.Messager) {
 			c.status = ClientStartingSync
 		}
 		m := msg.(*message.EntryAssign)
-		c.data[m.GetName()] = NewCacheEntryFromEntryAssign(m)
+		c.cache.Assign(m)
 	case message.MTypeServerHelloComplete:
 		// Step 4: The Server sends a Server Hello Complete message.
 		// Server is done sending entryAssigns
@@ -188,31 +167,12 @@ func (c *Client) handler(msg message.Messager) {
 
 	case message.MTypeEntryUpdate:
 		m := msg.(*message.EntryUpdate)
-
-		// @todo Should we optimize for writes or reads... currently optimized for reads.
-		for k, v := range c.data {
-			if v.entryID == m.EntryID() {
-				if v.entry.Type() != m.Entry().Type() {
-					log.Printf("Types differ. Ignoring update")
-					break
-				}
-				log.Printf("Update from:%v to:%v", v.entry, m.Entry())
-
-				c.data[k] = UpdateCacheWithEntryUpdate(c.data[k], m)
-				log.Printf("Update to:%v", c.data[k].entry)
-
-				break
-			}
-		}
+		c.cache.Update(m.EntryID(), m.EntrySN(), m.Entry())
 	case message.MTypeEntryFlagUpdate:
 		log.Print("Entry Flag Update Not Implemented")
 	case message.MTypeEntryDelete:
 		m := msg.(*message.EntryDelete)
-		for k, v := range c.data {
-			if v.entryID == m.EntryID() {
-				delete(c.data, k)
-			}
-		}
+		c.cache.DeleteID(m.EntryID())
 	case message.MTypeClearAllEntries:
 		log.Print("Clear All Entries Not Implemented")
 	case message.MTypeProtoUnsupported:
@@ -227,10 +187,181 @@ func (c *Client) handler(msg message.Messager) {
 
 //find the differences and send EntryAssign message to the server for each
 func (c *Client) notifyOfDifference() {
-	if len(c.seedData) == 0 {
+	if c.seedData != nil && c.seedData.NumEntries() == 0 {
 		log.Printf(">><< Nothing to send")
 	} else {
 		// @todo
 		//Compare c.seedData to c.data send any missing entries
 	}
 }
+
+//-----------------------------------------------------------------------------
+// User facing accessor methods
+//-----------------------------------------------------------------------------
+
+// Check if the table contains a key
+func (c *Client) ContainsKey(key string) bool {
+	_, err := c.cache.GetEntry(key)
+	return err == nil
+}
+
+// Remove entry that exactly matches key
+func (c *Client) Delete(key string) {
+	c.cache.DeleteKey(key)
+}
+
+// Remove all entries from the table
+func (c *Client) DeleteAll() {
+	c.cache.DeleteAll()
+}
+
+// true if the value is persisted, false otherwise
+// it the value is missing, false is returned
+func (c *Client) IsPersisted(key string) bool {
+	entry, err := c.cache.GetEntry(key)
+	if err != nil {
+		return false
+	}
+	return entry.EntryPersistent()
+
+}
+
+// Get a list of all the keys in the table
+func (c *Client) GetKeys() []string {
+	return c.cache.GetKeys()
+}
+
+// Returns the boolean the key maps to. If the key does not exist or is of different type, it will return the default value.
+func (c *Client) GetBoolean(key string, def bool) bool {
+	entry, err := c.cache.GetEntry(key)
+	if err != nil {
+		return def
+	}
+	if entry.Entry().Type() != entryType.ETypeBoolean {
+		return def
+	}
+	e := entry.Entry().(*entryType.Boolean)
+	return e.GetValue()
+}
+
+// Put a boolean in the table.
+// Returns: False if the table key already exists with a different type
+func (c *Client) PutBoolean(key string, val bool) bool {
+	// check if the key exists, if so send update else send assign
+	entry, err := c.cache.GetEntry(key)
+	if err != nil {
+		// entry does not exist
+		newEntry := entryType.NewBoolean(val)
+		msg := message.NewEntryAssign(key, newEntry, false, message.GetNewEntryID(), message.GetNewEntrySN())
+		c.SendMsg(msg)
+	} else {
+		// entry exists
+		e, ok := entry.Entry().(*entryType.Boolean)
+		if !ok {
+			return false
+		}
+		e.SetValue(val)
+		msg := message.NewEntryUpdate(entry.EntryID(), entry.EntrySN()+1, e)
+		c.SendMsg(msg)
+	}
+	return true
+}
+
+// Returns the number the key maps to. If the key does not exist or is of different type, it will return the default value.
+func (c *Client) GetNumber(key string, def float64) float64 {
+	entry, err := c.cache.GetEntry(key)
+	if err != nil {
+		return def
+	}
+	if entry.Entry().Type() != entryType.ETypeDouble {
+		return def
+	}
+	e := entry.Entry().(*entryType.Double)
+	return e.GetValue()
+}
+
+// Put a number in the table.
+//func (c *Client) PutNumber(key string, val float64) bool {}
+
+// Returns the string the key maps to. If the key does not exist or is of different type, it will return the default value.
+func (c *Client) GetString(key string, def string) string {
+	entry, err := c.cache.GetEntry(key)
+	if err != nil {
+		return def
+	}
+	if entry.Entry().Type() != entryType.ETypeString {
+		return def
+	}
+	e := entry.Entry().(*entryType.String)
+	return e.GetValue()
+}
+
+// Put a string in the table.
+//func (c *Client) PutString(key string, val string) bool {}
+
+// Returns the raw value (byte array) the key maps to. If the key does not exist or is of different type, it will return the default value.
+func (c *Client) GetRaw(key string, def []byte) []byte {
+	entry, err := c.cache.GetEntry(key)
+	if err != nil {
+		return def
+	}
+	if entry.Entry().Type() != entryType.ETypeRawData {
+		return def
+	}
+	e := entry.Entry().(*entryType.RawData)
+	return e.GetValue()
+}
+
+// Put a raw value (byte array) in the table.
+//func (c *Client) PutRaw(key string, val []byte) bool {}
+
+// Returns the boolean array the key maps to. If the key does not exist or is of different type, it will return the default value.
+func (c *Client) GetBooleanArray(key string, def []bool) []bool {
+	entry, err := c.cache.GetEntry(key)
+	if err != nil {
+		return def
+	}
+	if entry.Entry().Type() != entryType.ETypeBooleanArray {
+		return def
+	}
+	e := entry.Entry().(*entryType.BooleanArray)
+	return e.GetValue()
+}
+
+// Put a boolean array in the table.
+//func (c *Client) PutBooleanArray(key string, val []bool) bool {}
+
+// Returns the number array the key maps to.
+func (c *Client) GetNumberArray(key string, def []float64) []float64 {
+	entry, err := c.cache.GetEntry(key)
+	if err != nil {
+		return def
+	}
+	if entry.Entry().Type() != entryType.ETypeDoubleArray {
+		return def
+	}
+	e := entry.Entry().(*entryType.DoubleArray)
+	return e.GetValue()
+}
+
+// Put a number array in the table.
+//func (c *Client) PutNumberArray(key string, val []float64) bool {}
+
+// Returns the string array the key maps to. If the key does not exist or is of different type, it will return the default value.
+func (c *Client) GetStringArray(key string, def []string) []string {
+	entry, err := c.cache.GetEntry(key)
+	if err != nil {
+		return def
+	}
+	if entry.Entry().Type() != entryType.ETypeStringArray {
+		return def
+	}
+	e := entry.Entry().(*entryType.StringArray)
+	return e.GetValue()
+}
+
+// Put a string array in the table.
+//func (c *Client) PutStringArray(key string, val []string) bool {}
+
+//func (c *Client) ContainsTable(key string) bool {}
+//func (c *Client) GetTable(key string) NetworkTabler {}

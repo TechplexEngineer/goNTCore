@@ -34,9 +34,14 @@ func NewBoolean(value bool) *Boolean {
 	}
 }
 
-//GetValue gets the value of the string.
+//GetValue gets the value of the entry.
 func (b *Boolean) GetValue() bool {
 	return b.value
+}
+
+//SetValue sets the value of the entry.
+func (b *Boolean) SetValue(val bool) {
+	b.value = val
 }
 
 //MarshalEntry implements Marshaler for Network Table Entry.

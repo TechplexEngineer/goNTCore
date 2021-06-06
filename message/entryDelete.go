@@ -12,7 +12,7 @@ import (
 
 //implements the stringer interface
 func (o EntryDelete) String() string {
-	return fmt.Sprintf("Delete - ID:%#x", o.entryID)
+	return fmt.Sprintf("DeleteID - ID:%#x", o.entryID)
 }
 
 //EntryDelete is used to delete an entry from the network.

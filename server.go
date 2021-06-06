@@ -169,7 +169,7 @@ package goNTCore
 //	case message.MTypeEntryFlagUpdate:
 //		log.Print("Entry Flag Update Not Implemented")
 //	case message.MTypeEntryDelete:
-//		log.Print("Entry Delete Not Implemented")
+//		log.Print("Entry DeleteID Not Implemented")
 //	case message.MTypeClearAllEntries:
 //		log.Print("Clear All Entries Not Implemented")
 //	default:
