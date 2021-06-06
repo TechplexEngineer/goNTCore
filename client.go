@@ -37,7 +37,31 @@ const (
 	ClientReady
 )
 
-type DataMap map[string]entryType.Entrier
+type DataMap map[string]CacheEntry
+
+type CacheEntry struct {
+	entryName       string
+	entryID         uint16 //[2]byte
+	entrySN         uint16 //[2]byte
+	entryPersistent bool
+	entry           entryType.Entrier
+}
+
+func NewCacheEntryFromEntryAssign(ea *message.EntryAssign) CacheEntry {
+	return CacheEntry{
+		entryName:       ea.GetName(),
+		entryID:         ea.EntryID(),
+		entrySN:         ea.EntrySN(),
+		entryPersistent: ea.EntryPersistent(),
+		entry:           ea.Entry(),
+	}
+}
+
+func UpdateCacheWithEntryUpdate(entry CacheEntry, m *message.EntryUpdate) CacheEntry {
+	entry.entrySN = m.EntrySN()
+	entry.entry = m.Entry()
+	return entry
+}
 
 //Client is a Network Table client.
 type Client struct {
@@ -86,6 +110,7 @@ func (c *Client) Close() error {
 
 //SendMsg to the connected server
 func (c *Client) SendMsg(msg message.Messager) error {
+	log.Printf("<=== Sent %s", msg)
 	return SendMsg(msg, c)
 }
 
@@ -127,6 +152,7 @@ func (c *Client) startHandshake() error {
 }
 
 func (c *Client) handler(msg message.Messager) {
+	log.Printf("===> Got %s - %s", msg.Type().String(), msg)
 	switch msg.Type() {
 	case message.MTypeKeepAlive:
 		// keep alive messages keep the underlying TCP connection open and can be ignored
@@ -143,9 +169,7 @@ func (c *Client) handler(msg message.Messager) {
 			c.status = ClientStartingSync
 		}
 		m := msg.(*message.EntryAssign)
-		c.data[m.GetName()] = m.GetEntry()
-		_ = m
-		log.Printf("Entry Assign Not Implemented: %s", m.String())
+		c.data[m.GetName()] = NewCacheEntryFromEntryAssign(m)
 	case message.MTypeServerHelloComplete:
 		// Step 4: The Server sends a Server Hello Complete message.
 		// Server is done sending entryAssigns
@@ -163,7 +187,23 @@ func (c *Client) handler(msg message.Messager) {
 		c.status = ClientReady
 
 	case message.MTypeEntryUpdate:
-		log.Print("Entry Update Not Implemented")
+		m := msg.(*message.EntryUpdate)
+
+		// @todo Should we optimize for writes or reads... currently optimized for reads.
+		for k, v := range c.data {
+			if v.entryID == m.EntryID() {
+				if v.entry.Type() != m.Entry().Type() {
+					log.Printf("Types differ. Ignoring update")
+					break
+				}
+				log.Printf("Update from:%v to:%v", v.entry, m.Entry())
+
+				c.data[k] = UpdateCacheWithEntryUpdate(c.data[k], m)
+				log.Printf("Update to:%v", c.data[k].entry)
+
+				break
+			}
+		}
 	case message.MTypeEntryFlagUpdate:
 		log.Print("Entry Flag Update Not Implemented")
 	case message.MTypeEntryDelete:
@@ -182,5 +222,10 @@ func (c *Client) handler(msg message.Messager) {
 
 //find the differences and send EntryAssign message to the server for each
 func (c *Client) notifyOfDifference() {
-	// @todo
+	if len(c.seedData) == 0 {
+		log.Printf(">><< Nothing to send")
+	} else {
+		// @todo
+		//Compare c.seedData to c.data send any missing entries
+	}
 }

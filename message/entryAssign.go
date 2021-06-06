@@ -5,6 +5,7 @@
 package message
 
 import (
+	"encoding/binary"
 	"fmt"
 	"io"
 
@@ -24,7 +25,19 @@ type EntryAssign struct {
 // Get a string representation of the EntryAssign object
 //implements the stringer interface
 func (o EntryAssign) String() string {
-	return fmt.Sprintf("%s ID:%#x SN:%#x persist:%t entry:%s", o.entryName, o.entryID, o.entrySN, o.entryPersistent, o.entry)
+	return fmt.Sprintf("Assign - %s ID:%#x SN:%#x persist:%t value:%s", o.entryName, o.entryID, o.entrySN, o.entryPersistent, o.entry)
+}
+
+func (o EntryAssign) EntryPersistent() bool {
+	return o.entryPersistent
+}
+
+func (o EntryAssign) EntrySN() uint16 {
+	return binary.LittleEndian.Uint16(o.entrySN[:])
+}
+
+func (o EntryAssign) EntryID() uint16 {
+	return binary.LittleEndian.Uint16(o.entryID[:])
 }
 
 //NewEntryAssign creates a new instance on EntryAssign.
@@ -55,7 +68,7 @@ func (ea *EntryAssign) MarshalMessage(writer io.Writer) error {
 	if err != nil {
 		return err
 	}
-	_, err = writer.Write([]byte{ea.entry.Type()})
+	_, err = writer.Write([]byte{ea.entry.Type().Byte()})
 	if err != nil {
 		return err
 	}
@@ -121,7 +134,7 @@ func (ea EntryAssign) GetName() string {
 	return ea.entryName.String()
 }
 
-func (ea EntryAssign) GetEntry() entryType.Entrier {
+func (ea EntryAssign) Entry() entryType.Entrier {
 	return ea.entry
 }
 

@@ -11,6 +11,11 @@ type KeepAlive struct {
 	message
 }
 
+//implements the stringer interface
+func (m message) String() string {
+	return "Keepalive"
+}
+
 //NewKeepAlive creates a new KeepAlive message.
 func NewKeepAlive() *KeepAlive {
 	return &KeepAlive{

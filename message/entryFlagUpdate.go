@@ -4,7 +4,10 @@
 
 package message
 
-import "io"
+import (
+	"fmt"
+	"io"
+)
 
 const (
 	flagPersistantMask byte = 0x01
@@ -13,25 +16,30 @@ const (
 //EntryFlagUpdate is used to update the flag of an entry.
 type EntryFlagUpdate struct {
 	message
-	entryID   [2]byte
-	persitant bool
+	entryID    [2]byte
+	persistent bool
+}
+
+//implements the stringer interface
+func (o EntryFlagUpdate) String() string {
+	return fmt.Sprintf("FlagUpdate - id:%#x persist:%t", o.entryID, o.persistent)
 }
 
 //NewEntryFlagUpdate creates a new instance of EntryFlagUpdate.
-func NewEntryFlagUpdate(id [2]byte, persistant bool) *EntryFlagUpdate {
+func NewEntryFlagUpdate(id [2]byte, persistent bool) *EntryFlagUpdate {
 	return &EntryFlagUpdate{
 		message: message{
 			mType: MTypeEntryFlagUpdate,
 		},
-		entryID:   id,
-		persitant: persistant,
+		entryID:    id,
+		persistent: persistent,
 	}
 }
 
 //MarshalMessage implements Marshaler for Network Table Messages.
 func (efu *EntryFlagUpdate) MarshalMessage(writer io.Writer) error {
 	flags := byte(0x00)
-	if efu.persitant {
+	if efu.persistent {
 		flags = flags | flagPersistantMask
 	}
 	_, err := writer.Write([]byte{efu.Type().Byte()})
@@ -62,6 +70,6 @@ func (efu *EntryFlagUpdate) UnmarshalMessage(reader io.Reader) error {
 	}
 
 	copy(efu.entryID[:], idBuf)
-	efu.persitant = flagBuf[0]&flagPersistantMask == flagPersistantMask
+	efu.persistent = flagBuf[0]&flagPersistantMask == flagPersistantMask
 	return nil
 }

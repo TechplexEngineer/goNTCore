@@ -5,6 +5,7 @@
 package message
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/technomancers/goNTCore/util"
@@ -19,6 +20,19 @@ type ClearAllEntries struct {
 	message
 	magic [4]byte
 	valid bool
+}
+
+//implements the stringer interface
+func (m ClearAllEntries) String() string {
+	return fmt.Sprintf("ClearAll - magic:%#x valid:%t", m.magic, m.valid)
+}
+
+func (m ClearAllEntries) Valid() bool {
+	return m.valid
+}
+
+func (m ClearAllEntries) Magic() [4]byte {
+	return m.magic
 }
 
 //NewClearAllEntries creates an instance of clear all entries.

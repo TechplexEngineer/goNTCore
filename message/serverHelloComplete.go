@@ -11,6 +11,11 @@ type ServerHelloComplete struct {
 	message
 }
 
+//implements the stringer interface
+func (ServerHelloComplete) String() string {
+	return "Server Hello Complete"
+}
+
 //NewServerHelloComplete creates a new instance of ServerHelloComplete.
 func NewServerHelloComplete() *ServerHelloComplete {
 	return &ServerHelloComplete{

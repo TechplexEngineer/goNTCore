@@ -5,6 +5,7 @@
 package message
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/technomancers/goNTCore/entryType"
@@ -19,6 +20,19 @@ type ServerHello struct {
 	message
 	firstTimeClient bool
 	serverName      *entryType.String
+}
+
+//implements the stringer interface
+func (m ServerHello) String() string {
+	return fmt.Sprintf("ServerHello - firstTime:%t name:%s", m.firstTimeClient, m.serverName)
+}
+
+func (m ServerHello) ServerName() *entryType.String {
+	return m.serverName
+}
+
+func (m ServerHello) FirstTimeClient() bool {
+	return m.firstTimeClient
 }
 
 //NewServerHello creates a new instance of ServerHello.

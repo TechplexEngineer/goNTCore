@@ -4,12 +4,24 @@
 
 package message
 
-import "io"
+import (
+	"fmt"
+	"io"
+)
+
+//implements the stringer interface
+func (o EntryDelete) String() string {
+	return fmt.Sprintf("Delete - ID:%#x", o.entryID)
+}
 
 //EntryDelete is used to delete an entry from the network.
 type EntryDelete struct {
 	message
 	entryID [2]byte
+}
+
+func (o EntryDelete) EntryID() [2]byte {
+	return o.entryID
 }
 
 //NewEntryDelete creates a new instance of EntryDelete.

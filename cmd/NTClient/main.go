@@ -7,7 +7,6 @@ package main
 import (
 	"github.com/technomancers/goNTCore"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 )
@@ -32,8 +31,7 @@ func main() {
 			log.Printf("Client errored on stop: %s", err)
 		}
 	case err = <-errorChan:
-		if err != http.ErrServerClosed {
-			log.Fatalf("Client exited unexpectedly: %s", err)
-		}
+		log.Fatalf("Client exited unexpectedly: %s", err)
+		// @todo retry the connection...
 	}
 }

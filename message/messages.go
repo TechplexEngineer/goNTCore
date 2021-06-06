@@ -87,6 +87,7 @@ type Messager interface {
 	Type() MessageType
 	Marshaler
 	Unmarshaler
+	String() string
 }
 
 //Unmarshal takes the type passed in and tries to unmarshal the next bytes from reader based on the type.

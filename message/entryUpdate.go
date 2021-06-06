@@ -5,6 +5,8 @@
 package message
 
 import (
+	"encoding/binary"
+	"fmt"
 	"io"
 
 	"github.com/technomancers/goNTCore/entryType"
@@ -16,6 +18,23 @@ type EntryUpdate struct {
 	entryID [2]byte
 	entrySN [2]byte
 	entrier entryType.Entrier
+}
+
+//implements the stringer interface
+func (m EntryUpdate) String() string {
+	return fmt.Sprintf("EntryUpdate - ID:%#x SN:%t value:%s", m.entryID, m.entrySN, m.entrier)
+}
+
+func (m EntryUpdate) Entry() entryType.Entrier {
+	return m.entrier
+}
+
+func (m EntryUpdate) EntrySN() uint16 {
+	return binary.LittleEndian.Uint16(m.entrySN[:])
+}
+
+func (m EntryUpdate) EntryID() uint16 {
+	return binary.LittleEndian.Uint16(m.entryID[:])
 }
 
 //NewEntryUpdate creates a new instance on EntryUpdate.
@@ -44,7 +63,7 @@ func (eu *EntryUpdate) MarshalMessage(writer io.Writer) error {
 	if err != nil {
 		return err
 	}
-	_, err = writer.Write([]byte{eu.entrier.Type()})
+	_, err = writer.Write([]byte{eu.entrier.Type().Byte()})
 	if err != nil {
 		return err
 	}

@@ -5,6 +5,7 @@
 package message
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/technomancers/goNTCore/entryType"
@@ -15,6 +16,19 @@ type ClientHello struct {
 	message
 	protocol   [2]byte
 	clientName *entryType.String
+}
+
+//implements the stringer interface
+func (m ClientHello) String() string {
+	return fmt.Sprintf("Client Hello - protocol:%#x name:%s", m.protocol, m.ClientName())
+}
+
+func (m ClientHello) ClientName() string {
+	return m.clientName.String()
+}
+
+func (m ClientHello) Protocol() [2]byte {
+	return m.protocol
 }
 
 //NewClientHello creates a new instance of ClientHello with the specified Protocol and Client Name.

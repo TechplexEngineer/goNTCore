@@ -81,7 +81,7 @@ package goNTCore
 ////Returns false if the key does not exist.
 //func (t *DataTable) IsPersisted(key string) bool {
 //	key = t.getKey(key)
-//	entry, err := t.data.GetEntry(key)
+//	entry, err := t.data.Entry(key)
 //	if err != nil {
 //		return false
 //	}
@@ -108,7 +108,7 @@ package goNTCore
 ////If the value is not of type boolean it returns the default value passed in.
 //func (t *DataTable) GetBoolean(key string, def bool) bool {
 //	key = t.getKey(key)
-//	entry, err := t.data.GetEntry(key)
+//	entry, err := t.data.Entry(key)
 //	if err != nil {
 //		return def
 //	}
@@ -139,7 +139,7 @@ package goNTCore
 ////If the value is not of type float64 it returns the default value passed in.
 //func (t *DataTable) GetNumber(key string, def float64) float64 {
 //	key = t.getKey(key)
-//	entry, err := t.data.GetEntry(key)
+//	entry, err := t.data.Entry(key)
 //	if err != nil {
 //		return def
 //	}
@@ -170,7 +170,7 @@ package goNTCore
 ////If the value is not of type string it returns the default value passed in.
 //func (t *DataTable) GetString(key string, def string) string {
 //	key = t.getKey(key)
-//	entry, err := t.data.GetEntry(key)
+//	entry, err := t.data.Entry(key)
 //	if err != nil {
 //		return def
 //	}
@@ -201,7 +201,7 @@ package goNTCore
 ////If the value is not of type byte slice it returns the default value passed in.
 //func (t *DataTable) GetRaw(key string, def []byte) []byte {
 //	key = t.getKey(key)
-//	entry, err := t.data.GetEntry(key)
+//	entry, err := t.data.Entry(key)
 //	if err != nil {
 //		return def
 //	}
@@ -232,7 +232,7 @@ package goNTCore
 ////If the value is not of type boolean slice it returns the default value passed in.
 //func (t *DataTable) GetBooleanArray(key string, def []bool) []bool {
 //	key = t.getKey(key)
-//	entry, err := t.data.GetEntry(key)
+//	entry, err := t.data.Entry(key)
 //	if err != nil {
 //		return def
 //	}
@@ -263,7 +263,7 @@ package goNTCore
 ////If the value is not of type float64 slice it returns the default value passed in.
 //func (t *DataTable) GetNumberArray(key string, def []float64) []float64 {
 //	key = t.getKey(key)
-//	entry, err := t.data.GetEntry(key)
+//	entry, err := t.data.Entry(key)
 //	if err != nil {
 //		return def
 //	}
@@ -294,7 +294,7 @@ package goNTCore
 ////If the value is not of type string slice it returns the default value passed in.
 //func (t *DataTable) GetStringArray(key string, def []string) []string {
 //	key = t.getKey(key)
-//	entry, err := t.data.GetEntry(key)
+//	entry, err := t.data.Entry(key)
 //	if err != nil {
 //		return def
 //	}
@@ -325,7 +325,7 @@ package goNTCore
 //	return util.KeyJoin(t.root, key)
 //}
 //
-//func (t *DataTable) GetEntry(key string) (Entry, error) {
+//func (t *DataTable) Entry(key string) (Entry, error) {
 //
 //}
 //

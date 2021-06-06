@@ -4,12 +4,24 @@
 
 package message
 
-import "io"
+import (
+	"fmt"
+	"io"
+)
 
 //ProtoUnsupported is sent by the server to the client if the server does not support the specified protocol version.
 type ProtoUnsupported struct {
 	message
 	protocol [2]byte
+}
+
+//implements the stringer interface
+func (m ProtoUnsupported) String() string {
+	return fmt.Sprintf("ProtoUnsupported - %#x", m.protocol)
+}
+
+func (m ProtoUnsupported) Protocol() [2]byte {
+	return m.protocol
 }
 
 //NewProtoUnsupported creates a new instance of ProtoUnsupported.
