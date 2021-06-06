@@ -4,12 +4,19 @@
 
 package entryType
 
-import "io"
+import (
+	"fmt"
+	"io"
+)
 
 //DoubleArray is a Network Table Entry that holds the value of type Array of Doubles.
 type DoubleArray struct {
 	entry
 	value []*Double
+}
+
+func (da DoubleArray) String() string {
+	return fmt.Sprintf("%v", da.value)
 }
 
 //NewDoubleArray creates an instance of DoubleArray.

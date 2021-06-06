@@ -39,7 +39,7 @@ func (sh *ServerHello) MarshalMessage(writer io.Writer) error {
 	if !sh.firstTimeClient {
 		flags = flags | flagAlreadySeenClientMask
 	}
-	_, err := writer.Write([]byte{sh.Type()})
+	_, err := writer.Write([]byte{sh.Type().Byte()})
 	if err != nil {
 		return err
 	}

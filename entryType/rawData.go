@@ -5,6 +5,7 @@
 package entryType
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/technomancers/goNTCore/util"
@@ -15,6 +16,10 @@ import (
 type RawData struct {
 	entry
 	data []byte
+}
+
+func (rd RawData) String() string {
+	return fmt.Sprintf("%v", rd.data)
 }
 
 //NewRawData creates and instance of RawData.

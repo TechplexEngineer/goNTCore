@@ -9,27 +9,66 @@ import (
 	"io"
 )
 
+type MessageType byte
+
+func (o MessageType) String() string {
+	switch o {
+	case MTypeKeepAlive:
+		return "KeepAlive"
+	case MTypeClientHello:
+		return "ClientHello"
+	case MTypeProtoUnsupported:
+		return "ProtoUnsupported"
+	case MTypeServerHelloComplete:
+		return "ServerHelloComplete"
+	case MTypeServerHello:
+		return "ServerHello"
+	case MTypeClientHelloComplete:
+		return "ClientHelloComplete"
+	case MTypeEntryAssign:
+		return "EntryAssign"
+	case MTypeEntryUpdate:
+		return "EntryUpdate"
+	case MTypeEntryFlagUpdate:
+		return "EntryFlagUpdate"
+	case MTypeEntryDelete:
+		return "EntryDelete"
+	case MTypeClearAllEntries:
+		return "ClearAllEntries"
+	case MTypeRPCExecute:
+		return "RPCExecute"
+	case MTypeRPCResponse:
+		return "RPCResponse"
+	default:
+		return "Unknown Message Type"
+	}
+}
+
+func (o MessageType) Byte() byte {
+	return byte(o)
+}
+
 const (
-	MTypeKeepAlive           byte = 0x00
-	MTypeClientHello         byte = 0x01
-	MTypeProtoUnsupported    byte = 0x02
-	MTypeServerHelloComplete byte = 0x03
-	MTypeServerHello         byte = 0x04
-	MTypeClientHelloComplete byte = 0x05
-	MTypeEntryAssign         byte = 0x10
-	MTypeEntryUpdate         byte = 0x11
-	MTypeEntryFlagUpdate     byte = 0x12
-	MTypeEntryDelete         byte = 0x13
-	MTypeClearAllEntries     byte = 0x14
-	MTypeRPCExecute          byte = 0x20
-	MTypeRPCResponse         byte = 0x21
+	MTypeKeepAlive           MessageType = 0x00
+	MTypeClientHello         MessageType = 0x01
+	MTypeProtoUnsupported    MessageType = 0x02
+	MTypeServerHelloComplete MessageType = 0x03
+	MTypeServerHello         MessageType = 0x04
+	MTypeClientHelloComplete MessageType = 0x05
+	MTypeEntryAssign         MessageType = 0x10
+	MTypeEntryUpdate         MessageType = 0x11
+	MTypeEntryFlagUpdate     MessageType = 0x12
+	MTypeEntryDelete         MessageType = 0x13
+	MTypeClearAllEntries     MessageType = 0x14
+	MTypeRPCExecute          MessageType = 0x20
+	MTypeRPCResponse         MessageType = 0x21
 )
 
 type message struct {
-	mType byte
+	mType MessageType
 }
 
-func (m message) Type() byte {
+func (m message) Type() MessageType {
 	return m.mType
 }
 
@@ -45,7 +84,7 @@ type Unmarshaler interface {
 
 //Messager is the interface implemented by types that can communicate on the network.
 type Messager interface {
-	Type() byte
+	Type() MessageType
 	Marshaler
 	Unmarshaler
 }
@@ -54,7 +93,7 @@ type Messager interface {
 //It returns an instance messager.
 func Unmarshal(t byte, reader io.Reader) (Messager, error) {
 	var msg Messager
-	switch t {
+	switch MessageType(t) {
 	case MTypeKeepAlive:
 		msg = new(KeepAlive)
 	case MTypeClientHello:

@@ -34,7 +34,7 @@ func (efu *EntryFlagUpdate) MarshalMessage(writer io.Writer) error {
 	if efu.persitant {
 		flags = flags | flagPersistantMask
 	}
-	_, err := writer.Write([]byte{efu.Type()})
+	_, err := writer.Write([]byte{efu.Type().Byte()})
 	if err != nil {
 		return err
 	}

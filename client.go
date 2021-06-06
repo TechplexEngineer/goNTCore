@@ -5,67 +5,83 @@
 package goNTCore
 
 import (
-	"errors"
 	"fmt"
+	"github.com/technomancers/goNTCore/entryType"
 	"io"
+	"log"
 	"net"
+	"strconv"
 
 	"github.com/technomancers/goNTCore/message"
 )
+
+// ClientStatus is the enum type to represent the different
+// states/statuses the client could have
+type ClientStatus int
+
+const (
+	// ClientDisconnected indicates that the client cannot reach
+	// the server
+	ClientDisconnected ClientStatus = iota
+	// ClientStarting indicates that the client has connected to
+	// the server but has not began actual communication
+	ClientConnected
+	// ClientStarting indicates the initial sync is underway
+	ClientStarting
+	// ClientStartingSync indicates that the client has received the
+	// server hello and is beginning to synchronize values with the
+	// server.
+	ClientStartingSync
+	// ClientReady indicates that the client has competed initial sync
+	// and is ready to respond to queries.
+	ClientReady
+)
+
+type DataMap map[string]entryType.Entrier
 
 //Client is a Network Table client.
 type Client struct {
 	net.Conn
 	connected bool
 	name      string
-	status    string
-	dataTable NetworkTabler
-	Log       chan LogMessage
-	sendOnly  bool
+	status    ClientStatus
+	data      DataMap
+
+	// we should not modify seedData
+	// Optionally passed in to ensure the keys exist
+	seedData DataMap
 }
 
 //NewClient creates a new client to communicate to a Network Table server.
-func NewClient(serverHost string, name string, data Data) (*Client, error) {
-	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", serverHost, PORT))
+func NewClient(serverHost string, name string, data DataMap) (*Client, chan error, error) {
+	//log.Printf("Connecting to %s", net.JoinHostPort(serverHost, strconv.Itoa(PORT)))
+	conn, err := net.Dial("tcp", net.JoinHostPort(serverHost, strconv.Itoa(PORT)))
 	if err != nil {
-		return nil, err
+		return nil, nil, fmt.Errorf("unable to start tcp connection - %w", err)
 	}
-	return &Client{
+	c := &Client{
 		Conn:      conn,
 		connected: true,
 		name:      name,
-		status:    "pending",
-		dataTable: NewTable(data, ""),
-		Log:       make(chan LogMessage),
-		sendOnly:  false,
-	}, nil
+		status:    ClientDisconnected,
+		data:      make(DataMap),
+		seedData:  copyDataMap(data),
+	}
+	echan := make(chan error, 1)
+	go c.readIncoming(echan)
+	err = c.startHandshake()
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to start handshake - %w", err)
+	}
+
+	return c, echan, nil
 }
 
 //Close closes the connection to the Network Table server.
 func (c *Client) Close() error {
 	c.connected = false
+	c.status = ClientDisconnected
 	return c.Conn.Close()
-}
-
-//Listen for messages sent from the server.
-//Best to start this in a go routine.
-func (c *Client) Listen() {
-	for c.connected {
-		possibleMsgType := make([]byte, 1)
-		_, err := io.ReadFull(c, possibleMsgType)
-		if err != nil {
-			c.Log <- NewErrorMessage(err)
-			c.Close()
-			continue
-		}
-		msg, err := message.Unmarshal(possibleMsgType[0], c)
-		if err != nil {
-			c.Log <- NewErrorMessage(err)
-			c.Close()
-			continue
-		}
-		c.handler(msg)
-	}
 }
 
 //SendMsg to the connected server
@@ -73,58 +89,98 @@ func (c *Client) SendMsg(msg message.Messager) error {
 	return SendMsg(msg, c)
 }
 
+func copyDataMap(origMap DataMap) DataMap {
+	newMap := make(DataMap)
+
+	for k, v := range origMap {
+		newMap[k] = v
+	}
+
+	return newMap
+}
+
+//Listen for messages sent from the server.
+//Best to start this in a go routine.
+func (c *Client) readIncoming(echan chan error) {
+	for c.connected {
+		possibleMsgType := make([]byte, 1)
+		_, err := io.ReadFull(c, possibleMsgType)
+		if err != nil {
+			echan <- fmt.Errorf("unable to read from server - %s", err)
+			c.Close()
+			continue
+		}
+		msg, err := message.Unmarshal(possibleMsgType[0], c)
+		if err != nil {
+			echan <- fmt.Errorf("unable to unmarshal message type %#x - %s", possibleMsgType, err)
+			c.Close()
+			continue
+		}
+		c.handler(msg)
+	}
+}
+
 //StartHandshake starts the handshake with the server.
-func (c *Client) StartHandshake() error {
-	return c.SendMsg(message.NewClientHello(ProtocolVersion, c.name))
+func (c *Client) startHandshake() error {
+	// Step 1: Client sends Client Hello
+	return c.SendMsg(message.NewClientHello(ProtocolVersion(), c.name))
 }
 
 func (c *Client) handler(msg message.Messager) {
 	switch msg.Type() {
 	case message.MTypeKeepAlive:
+		// keep alive messages keep the underlying TCP connection open and can be ignored
 		return
 	case message.MTypeServerHello:
-		c.status = LISTENING
-	case message.MTypeServerHelloComplete:
-		c.notifyOfDifference()
-	case message.MTypeProtoUnsupported:
-		c.Log <- NewErrorMessage(errors.New("Unsupported Protocol Version"))
-		c.Close()
+		// Step 2: Server replies to ClientHello with ServerHello
+		// hello complete, starting sync
+		c.status = ClientConnected
+		// nothing to send back, server will start sending EntryAssign messages automatically
 	case message.MTypeEntryAssign:
-		if c.sendOnly {
-			return
+		// Step 3: Server sends EntryAssign messages for each entry
+		// if we just sent a client hello then the sync is beginning
+		if c.status == ClientDisconnected {
+			c.status = ClientStartingSync
 		}
-		c.Log <- NewLogMessage("Entry Assign Not Implemented")
+		m := msg.(*message.EntryAssign)
+		c.data[m.GetName()] = m.GetEntry()
+		_ = m
+		log.Printf("Entry Assign Not Implemented: %s", m.String())
+	case message.MTypeServerHelloComplete:
+		// Step 4: The Server sends a Server Hello Complete message.
+		// Server is done sending entryAssigns
+
+		// Step 5: For all Entries the Client recognizes that the Server
+		// did not identify with a Entry Assignment.
+		// we can now send any entries the server should have
+		c.notifyOfDifference()
+
+		// Step 6: The Client sends a Client Hello Complete message.
+		err := c.SendMsg(message.NewClientHelloComplete())
+		if err != nil {
+			log.Printf("unable to send client hello complete - %s", err)
+		}
+		c.status = ClientReady
+
 	case message.MTypeEntryUpdate:
-		if c.sendOnly {
-			return
-		}
-		c.Log <- NewLogMessage("Entry Update Not Implemented")
+		log.Print("Entry Update Not Implemented")
 	case message.MTypeEntryFlagUpdate:
-		if c.sendOnly {
-			return
-		}
-		c.Log <- NewLogMessage("Entry Flag Update Not Implemented")
+		log.Print("Entry Flag Update Not Implemented")
 	case message.MTypeEntryDelete:
-		if c.sendOnly {
-			return
-		}
-		c.Log <- NewLogMessage("Entry Delete Not Implemented")
+		log.Print("Entry Delete Not Implemented")
 	case message.MTypeClearAllEntries:
-		if c.sendOnly {
-			return
-		}
-		c.Log <- NewLogMessage("Clear All Entries Not Implemented")
+		log.Print("Clear All Entries Not Implemented")
+	case message.MTypeProtoUnsupported:
+		m := msg.(*message.ProtoUnsupported)
+		log.Printf("Unsupported Protocol Version, server supports %#x", m.GetServerSupportedProtocolVersion())
+		c.Close()
 	default:
-		c.Log <- NewErrorMessage(errors.New("Could not handle the message"))
+		log.Printf("Unknown message type (%#x) from server", msg.Type())
 		c.Close()
 	}
 }
 
+//find the differences and send EntryAssign message to the server for each
 func (c *Client) notifyOfDifference() {
-	//find the differences and create new entries for each.
-	err := c.SendMsg(message.NewClientHelloComplete())
-	if err != nil {
-		c.Log <- NewErrorMessage(err)
-	}
-	c.status = READY
+	// @todo
 }

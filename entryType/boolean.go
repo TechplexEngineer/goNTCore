@@ -4,7 +4,10 @@
 
 package entryType
 
-import "io"
+import (
+	"fmt"
+	"io"
+)
 
 const (
 	booleanTrue  byte = 0x01
@@ -15,6 +18,10 @@ const (
 type Boolean struct {
 	entry
 	value bool
+}
+
+func (b Boolean) String() string {
+	return fmt.Sprintf("%t", b.value)
 }
 
 //NewBoolean creates a new instance of a Boolean entry

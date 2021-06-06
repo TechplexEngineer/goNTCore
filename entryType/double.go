@@ -6,6 +6,7 @@ package entryType
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 	"math"
 )
@@ -14,6 +15,10 @@ import (
 type Double struct {
 	entry
 	value float64
+}
+
+func (d Double) String() string {
+	return fmt.Sprintf("%f", d.value)
 }
 
 //NewDouble creates a new instance of double.

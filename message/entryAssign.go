@@ -5,16 +5,10 @@
 package message
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/technomancers/goNTCore/entryType"
-)
-
-var (
-	//NewEntryID is the ID of an element when a client is creating a new entry.
-	NewEntryID = [2]byte{0xff, 0xff}
-	//NewEntrySN is the sequence number of an element when a client is creating a new entry.
-	NewEntrySN = [2]byte{0x00, 0x00}
 )
 
 //EntryAssign is used to inform others that a new entry was introduced into the network.
@@ -23,19 +17,25 @@ type EntryAssign struct {
 	entryName       *entryType.String
 	entryID         [2]byte
 	entrySN         [2]byte
-	entryPersistant bool
-	entrier         entryType.Entrier
+	entryPersistent bool
+	entry           entryType.Entrier
+}
+
+// Get a string representation of the EntryAssign object
+//implements the stringer interface
+func (o EntryAssign) String() string {
+	return fmt.Sprintf("%s ID:%#x SN:%#x persist:%t entry:%s", o.entryName, o.entryID, o.entrySN, o.entryPersistent, o.entry)
 }
 
 //NewEntryAssign creates a new instance on EntryAssign.
-func NewEntryAssign(entryName string, entrier entryType.Entrier, persistant bool, id, sn [2]byte) *EntryAssign {
+func NewEntryAssign(entryName string, entrier entryType.Entrier, persistent bool, id, sn [2]byte) *EntryAssign {
 	return &EntryAssign{
 		message: message{
 			mType: MTypeEntryAssign,
 		},
 		entryName:       entryType.NewString(entryName),
-		entrier:         entrier,
-		entryPersistant: persistant,
+		entry:           entrier,
+		entryPersistent: persistent,
 		entryID:         id,
 		entrySN:         sn,
 	}
@@ -44,10 +44,10 @@ func NewEntryAssign(entryName string, entrier entryType.Entrier, persistant bool
 //MarshalMessage implements Marshaler for Network Table Messages.
 func (ea *EntryAssign) MarshalMessage(writer io.Writer) error {
 	flags := byte(0x00)
-	if ea.entryPersistant {
+	if ea.entryPersistent {
 		flags = flags | flagPersistantMask
 	}
-	_, err := writer.Write([]byte{ea.Type()})
+	_, err := writer.Write([]byte{ea.Type().Byte()})
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func (ea *EntryAssign) MarshalMessage(writer io.Writer) error {
 	if err != nil {
 		return err
 	}
-	_, err = writer.Write([]byte{ea.entrier.Type()})
+	_, err = writer.Write([]byte{ea.entry.Type()})
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func (ea *EntryAssign) MarshalMessage(writer io.Writer) error {
 	if err != nil {
 		return err
 	}
-	err = ea.entrier.MarshalEntry(writer)
+	err = ea.entry.MarshalEntry(writer)
 	return err
 }
 
@@ -110,9 +110,29 @@ func (ea *EntryAssign) UnmarshalMessage(reader io.Reader) error {
 	}
 
 	ea.entryName = name
-	ea.entryPersistant = flagBuf[0]&flagPersistantMask == flagPersistantMask
-	ea.entrier = ent
+	ea.entryPersistent = flagBuf[0]&flagPersistantMask == flagPersistantMask
+	ea.entry = ent
 	copy(ea.entryID[:], idBuf)
 	copy(ea.entrySN[:], snBuf)
 	return nil
+}
+
+func (ea EntryAssign) GetName() string {
+	return ea.entryName.String()
+}
+
+func (ea EntryAssign) GetEntry() entryType.Entrier {
+	return ea.entry
+}
+
+//NewEntryID is the ID of an element when a client is creating a new entry.
+// (Since go doesn't support constant arrays as of 1.16)
+func GetNewEntryID() [2]byte {
+	return [2]byte{0xff, 0xff}
+}
+
+//NewEntrySN is the sequence number of an element when a client is creating a new entry.
+// (Since go doesn't support constant arrays as of 1.16)
+func GetNewEntrySN() [2]byte {
+	return [2]byte{0x00, 0x00}
 }

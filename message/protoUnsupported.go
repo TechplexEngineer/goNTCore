@@ -24,7 +24,7 @@ func NewProtoUnsupported(protocol [2]byte) *ProtoUnsupported {
 
 //MarshalMessage implements Marshaler for Network Table Messages.
 func (pu *ProtoUnsupported) MarshalMessage(writer io.Writer) error {
-	_, err := writer.Write([]byte{pu.Type()})
+	_, err := writer.Write([]byte{pu.Type().Byte()})
 	if err != nil {
 		return err
 	}
@@ -44,4 +44,14 @@ func (pu *ProtoUnsupported) UnmarshalMessage(reader io.Reader) error {
 
 	copy(pu.protocol[:], protoBuf)
 	return nil
+}
+
+// -----------
+
+// A Server issues a Protocol Version Unsupported message to a Client to
+// inform it that the requested protocol revision is not supported. It also
+// includes the most recent protocol revision which it supports, such that
+// a Client may reconnect under a prior protocol revision if able.
+func (pu *ProtoUnsupported) GetServerSupportedProtocolVersion() [2]byte {
+	return pu.protocol
 }

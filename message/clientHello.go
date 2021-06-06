@@ -40,7 +40,7 @@ func (ch *ClientHello) GetClientName() string {
 
 //MarshalMessage implements Marshaler for Network Table Messages.
 func (ch *ClientHello) MarshalMessage(writer io.Writer) error {
-	_, err := writer.Write([]byte{ch.Type()})
+	_, err := writer.Write([]byte{ch.Type().Byte()})
 	if err != nil {
 		return err
 	}

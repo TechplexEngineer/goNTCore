@@ -32,7 +32,7 @@ func NewEntryUpdate(id, sn [2]byte, entrier entryType.Entrier) *EntryUpdate {
 
 //MarshalMessage implements Marshaler for Network Table Messages.
 func (eu *EntryUpdate) MarshalMessage(writer io.Writer) error {
-	_, err := writer.Write([]byte{eu.Type()})
+	_, err := writer.Write([]byte{eu.Type().Byte()})
 	if err != nil {
 		return err
 	}

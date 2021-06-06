@@ -22,7 +22,7 @@ func NewKeepAlive() *KeepAlive {
 
 //MarshalMessage implements Marshaler for Network Table Messages.
 func (ka *KeepAlive) MarshalMessage(writer io.Writer) error {
-	_, err := writer.Write([]byte{ka.Type()})
+	_, err := writer.Write([]byte{ka.Type().Byte()})
 	return err
 }
 

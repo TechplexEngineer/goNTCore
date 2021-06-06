@@ -13,6 +13,10 @@ type String struct {
 	value string
 }
 
+func (o String) String() string {
+	return o.value
+}
+
 //NewString creates a new Network Table Entry of type string.
 func NewString(value string) *String {
 	return &String{

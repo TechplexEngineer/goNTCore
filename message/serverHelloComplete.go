@@ -22,7 +22,7 @@ func NewServerHelloComplete() *ServerHelloComplete {
 
 //MarshalMessage implements Marshaler for Network Table Messages.
 func (shc *ServerHelloComplete) MarshalMessage(writer io.Writer) error {
-	_, err := writer.Write([]byte{shc.Type()})
+	_, err := writer.Write([]byte{shc.Type().Byte()})
 	return err
 }
 

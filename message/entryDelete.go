@@ -24,7 +24,7 @@ func NewEntryDelete(id [2]byte) *EntryDelete {
 
 //MarshalMessage implements Marshaler for Network Table Messages.
 func (ed *EntryDelete) MarshalMessage(writer io.Writer) error {
-	_, err := writer.Write([]byte{ed.Type()})
+	_, err := writer.Write([]byte{ed.Type().Byte()})
 	if err != nil {
 		return err
 	}

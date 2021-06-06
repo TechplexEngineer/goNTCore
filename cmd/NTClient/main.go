@@ -5,29 +5,35 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/technomancers/goNTCore"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
 )
 
 func main() {
-	quit := make(chan bool)
-	c, err := goNTCore.NewClient("localhost", "Test Client")
+	c, errorChan, err := goNTCore.NewClient("localhost", "Test Client", nil)
 	if err != nil {
 		panic(err)
 	}
+
+	log.Printf("--- Client Started ---\n\n")
 	defer c.Close()
-	go func() {
-		for l := range c.Log {
-			if l.Err != nil {
-				fmt.Println(l.Err)
-			}
-			if l.Message != "" {
-				fmt.Println(l.Message)
-			}
+
+	ctrlc := make(chan os.Signal)
+	signal.Notify(ctrlc, os.Interrupt)
+
+	select {
+	case <-ctrlc:
+		err = c.Close()
+		log.Print("--- Client Stopped by interrupt signal ---")
+		if err != nil {
+			log.Printf("Client errored on stop: %s", err)
 		}
-	}()
-	go c.Listen()
-	c.StartHandshake()
-	<-quit
+	case err = <-errorChan:
+		if err != http.ErrServerClosed {
+			log.Fatalf("Client exited unexpectedly: %s", err)
+		}
+	}
 }

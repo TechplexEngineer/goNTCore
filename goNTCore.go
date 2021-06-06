@@ -6,6 +6,7 @@ package goNTCore
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 
 	"github.com/technomancers/goNTCore/message"
@@ -22,21 +23,22 @@ const (
 	READY = "ready"
 )
 
-var (
-	//ProtocolVersion is what protocol this package supports
-	ProtocolVersion = [2]byte{0x03, 0x00}
-)
+// ProtocolVersion is the protocol version this package supports
+// (Since go doesn't support constant arrays as of 1.16)
+func ProtocolVersion() [2]byte {
+	return [2]byte{0x03, 0x00} //v3.0
+}
 
 //SendMsg adds a buffer to the Marshaling before sending so the whole message is sent at once.
 func SendMsg(msg message.Messager, writer io.Writer) error {
 	sendBuf := new(bytes.Buffer)
 	err := msg.MarshalMessage(sendBuf)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to marshal message - %w", err)
 	}
 	_, err = sendBuf.WriteTo(writer)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to write message buffer - %w", err)
 	}
 	return nil
 }

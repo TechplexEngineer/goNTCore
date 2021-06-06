@@ -43,6 +43,7 @@ type Entrier interface {
 	Type() byte
 	Marshaler
 	Unmarshaler
+	String() string
 }
 
 //Unmarshal takes the type passed in and tries to unmarshal the next bytes from reader based on the type.

@@ -4,12 +4,19 @@
 
 package entryType
 
-import "io"
+import (
+	"fmt"
+	"io"
+)
 
 //StringArray is a Network Table Entry that holds the value of type Array of Strings.
 type StringArray struct {
 	entry
 	value []*String
+}
+
+func (sa StringArray) String() string {
+	return fmt.Sprintf("%v", sa.value)
 }
 
 //NewStringArray creates an instance of StringArray.

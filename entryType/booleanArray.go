@@ -4,12 +4,19 @@
 
 package entryType
 
-import "io"
+import (
+	"fmt"
+	"io"
+)
 
 //BooleanArray is a Network Table Entry that holds the value of type Array of Booleans.
 type BooleanArray struct {
 	entry
 	value []*Boolean
+}
+
+func (ba BooleanArray) String() string {
+	return fmt.Sprintf("%v", ba.value)
 }
 
 //NewBooleanArray creates an instance of BooleanArray.

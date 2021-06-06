@@ -34,7 +34,7 @@ func NewClearAllEntries() *ClearAllEntries {
 
 //MarshalMessage implements Marshaler for Network Table Messages.
 func (cae *ClearAllEntries) MarshalMessage(writer io.Writer) error {
-	_, err := writer.Write([]byte{cae.Type()})
+	_, err := writer.Write([]byte{cae.Type().Byte()})
 	if err != nil {
 		return err
 	}
