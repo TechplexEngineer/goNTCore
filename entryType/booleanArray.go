@@ -33,13 +33,23 @@ func NewBooleanArray(value []bool) *BooleanArray {
 	return ba
 }
 
-//GetValue gets the value of the string.
+//GetValue gets the value of the entry.
 func (ba *BooleanArray) GetValue() []bool {
 	var out []bool
 	for _, b := range ba.value {
 		out = append(out, b.GetValue())
 	}
 	return out
+}
+
+//SetValue sets the value of the entry.
+func (da *BooleanArray) SetValue(val []bool) {
+	// clear out the previous values
+	da.value = make([]*Boolean, 1)
+
+	for _, v := range val {
+		da.value = append(da.value, NewBoolean(v))
+	}
 }
 
 //MarshalEntry implements Marshaler for Network Table Entry.

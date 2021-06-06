@@ -36,6 +36,11 @@ func (d *Double) GetValue() float64 {
 	return d.value
 }
 
+//SetValue sets the value of the entry.
+func (d *Double) SetValue(val float64) {
+	d.value = val
+}
+
 //MarshalEntry implements Marshaler for Network Table Entry.
 func (d *Double) MarshalEntry(writer io.Writer) error {
 	val := math.Float64bits(d.value)

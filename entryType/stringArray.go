@@ -33,13 +33,23 @@ func NewStringArray(value []string) *StringArray {
 	return sa
 }
 
-//GetValue gets the value of the string.
+//GetValue gets the value of the entry.
 func (sa *StringArray) GetValue() []string {
 	var out []string
 	for _, s := range sa.value {
 		out = append(out, s.GetValue())
 	}
 	return out
+}
+
+//SetValue sets the value of the entry.
+func (da *StringArray) SetValue(val []string) {
+	// clear out the previous values
+	da.value = make([]*String, 1)
+
+	for _, v := range val {
+		da.value = append(da.value, NewString(v))
+	}
 }
 
 //MarshalEntry implements Marshaler for Network Table Entry.

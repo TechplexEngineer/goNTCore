@@ -93,16 +93,6 @@ func (c *Client) SendMsg(msg message.Messager) error {
 	return SendMsg(msg, c)
 }
 
-//func copyDataMap(origMap DataMap) DataMap {
-//	newMap := make(DataMap)
-//
-//	for k, v := range origMap {
-//		newMap[k] = v
-//	}
-//
-//	return newMap
-//}
-
 //Listen for messages sent from the server.
 //Best to start this in a go routine.
 func (c *Client) readIncoming(echan chan error) {
@@ -261,8 +251,10 @@ func (c *Client) PutBoolean(key string, val bool) bool {
 			return false
 		}
 		e.SetValue(val)
+		log.Printf("C:%d N:%d", entry.EntrySN(), entry.EntrySN()+1)
 		msg := message.NewEntryUpdate(entry.EntryID(), entry.EntrySN()+1, e)
 		c.SendMsg(msg)
+		c.cache.Update(entry.EntryID(), entry.EntrySN()+1, e)
 	}
 	return true
 }
@@ -281,7 +273,27 @@ func (c *Client) GetNumber(key string, def float64) float64 {
 }
 
 // Put a number in the table.
-//func (c *Client) PutNumber(key string, val float64) bool {}
+func (c *Client) PutNumber(key string, val float64) bool {
+	// check if the key exists, if so send update else send assign
+	entry, err := c.cache.GetEntry(key)
+	if err != nil {
+		// entry does not exist
+		newEntry := entryType.NewDouble(val)
+		msg := message.NewEntryAssign(key, newEntry, false, message.GetNewEntryID(), message.GetNewEntrySN())
+		c.SendMsg(msg)
+	} else {
+		// entry exists
+		e, ok := entry.Entry().(*entryType.Double)
+		if !ok {
+			return false
+		}
+		e.SetValue(val)
+		msg := message.NewEntryUpdate(entry.EntryID(), entry.EntrySN()+1, e)
+		c.SendMsg(msg)
+		c.cache.Update(entry.EntryID(), entry.EntrySN()+1, e)
+	}
+	return true
+}
 
 // Returns the string the key maps to. If the key does not exist or is of different type, it will return the default value.
 func (c *Client) GetString(key string, def string) string {
@@ -297,7 +309,27 @@ func (c *Client) GetString(key string, def string) string {
 }
 
 // Put a string in the table.
-//func (c *Client) PutString(key string, val string) bool {}
+func (c *Client) PutString(key string, val string) bool {
+	// check if the key exists, if so send update else send assign
+	entry, err := c.cache.GetEntry(key)
+	if err != nil {
+		// entry does not exist
+		newEntry := entryType.NewString(val)
+		msg := message.NewEntryAssign(key, newEntry, false, message.GetNewEntryID(), message.GetNewEntrySN())
+		c.SendMsg(msg)
+	} else {
+		// entry exists
+		e, ok := entry.Entry().(*entryType.String)
+		if !ok {
+			return false
+		}
+		e.SetValue(val)
+		msg := message.NewEntryUpdate(entry.EntryID(), entry.EntrySN()+1, e)
+		c.SendMsg(msg)
+		c.cache.Update(entry.EntryID(), entry.EntrySN()+1, e)
+	}
+	return true
+}
 
 // Returns the raw value (byte array) the key maps to. If the key does not exist or is of different type, it will return the default value.
 func (c *Client) GetRaw(key string, def []byte) []byte {
@@ -313,7 +345,27 @@ func (c *Client) GetRaw(key string, def []byte) []byte {
 }
 
 // Put a raw value (byte array) in the table.
-//func (c *Client) PutRaw(key string, val []byte) bool {}
+func (c *Client) PutRaw(key string, val []byte) bool {
+	// check if the key exists, if so send update else send assign
+	entry, err := c.cache.GetEntry(key)
+	if err != nil {
+		// entry does not exist
+		newEntry := entryType.NewRawData(val)
+		msg := message.NewEntryAssign(key, newEntry, false, message.GetNewEntryID(), message.GetNewEntrySN())
+		c.SendMsg(msg)
+	} else {
+		// entry exists
+		e, ok := entry.Entry().(*entryType.RawData)
+		if !ok {
+			return false
+		}
+		e.SetValue(val)
+		msg := message.NewEntryUpdate(entry.EntryID(), entry.EntrySN()+1, e)
+		c.SendMsg(msg)
+		c.cache.Update(entry.EntryID(), entry.EntrySN()+1, e)
+	}
+	return true
+}
 
 // Returns the boolean array the key maps to. If the key does not exist or is of different type, it will return the default value.
 func (c *Client) GetBooleanArray(key string, def []bool) []bool {
@@ -329,7 +381,27 @@ func (c *Client) GetBooleanArray(key string, def []bool) []bool {
 }
 
 // Put a boolean array in the table.
-//func (c *Client) PutBooleanArray(key string, val []bool) bool {}
+func (c *Client) PutBooleanArray(key string, val []bool) bool {
+	// check if the key exists, if so send update else send assign
+	entry, err := c.cache.GetEntry(key)
+	if err != nil {
+		// entry does not exist
+		newEntry := entryType.NewBooleanArray(val)
+		msg := message.NewEntryAssign(key, newEntry, false, message.GetNewEntryID(), message.GetNewEntrySN())
+		c.SendMsg(msg)
+	} else {
+		// entry exists
+		e, ok := entry.Entry().(*entryType.BooleanArray)
+		if !ok {
+			return false
+		}
+		e.SetValue(val)
+		msg := message.NewEntryUpdate(entry.EntryID(), entry.EntrySN()+1, e)
+		c.SendMsg(msg)
+		c.cache.Update(entry.EntryID(), entry.EntrySN()+1, e)
+	}
+	return true
+}
 
 // Returns the number array the key maps to.
 func (c *Client) GetNumberArray(key string, def []float64) []float64 {
@@ -345,7 +417,27 @@ func (c *Client) GetNumberArray(key string, def []float64) []float64 {
 }
 
 // Put a number array in the table.
-//func (c *Client) PutNumberArray(key string, val []float64) bool {}
+func (c *Client) PutNumberArray(key string, val []float64) bool {
+	// check if the key exists, if so send update else send assign
+	entry, err := c.cache.GetEntry(key)
+	if err != nil {
+		// entry does not exist
+		newEntry := entryType.NewDoubleArray(val)
+		msg := message.NewEntryAssign(key, newEntry, false, message.GetNewEntryID(), message.GetNewEntrySN())
+		c.SendMsg(msg)
+	} else {
+		// entry exists
+		e, ok := entry.Entry().(*entryType.DoubleArray)
+		if !ok {
+			return false
+		}
+		e.SetValue(val)
+		msg := message.NewEntryUpdate(entry.EntryID(), entry.EntrySN()+1, e)
+		c.SendMsg(msg)
+		c.cache.Update(entry.EntryID(), entry.EntrySN()+1, e)
+	}
+	return true
+}
 
 // Returns the string array the key maps to. If the key does not exist or is of different type, it will return the default value.
 func (c *Client) GetStringArray(key string, def []string) []string {
@@ -361,7 +453,27 @@ func (c *Client) GetStringArray(key string, def []string) []string {
 }
 
 // Put a string array in the table.
-//func (c *Client) PutStringArray(key string, val []string) bool {}
+func (c *Client) PutStringArray(key string, val []string) bool {
+	// check if the key exists, if so send update else send assign
+	entry, err := c.cache.GetEntry(key)
+	if err != nil {
+		// entry does not exist
+		newEntry := entryType.NewStringArray(val)
+		msg := message.NewEntryAssign(key, newEntry, false, message.GetNewEntryID(), message.GetNewEntrySN())
+		c.SendMsg(msg)
+	} else {
+		// entry exists
+		e, ok := entry.Entry().(*entryType.StringArray)
+		if !ok {
+			return false
+		}
+		e.SetValue(val)
+		msg := message.NewEntryUpdate(entry.EntryID(), entry.EntrySN()+1, e)
+		c.SendMsg(msg)
+		c.cache.Update(entry.EntryID(), entry.EntrySN()+1, e)
+	}
+	return true
+}
 
 //func (c *Client) ContainsTable(key string) bool {}
 //func (c *Client) GetTable(key string) NetworkTabler {}

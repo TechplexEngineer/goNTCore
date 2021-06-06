@@ -22,7 +22,7 @@ type EntryUpdate struct {
 
 //implements the stringer interface
 func (m EntryUpdate) String() string {
-	return fmt.Sprintf("EntryUpdate - ID:%#x SN:%t value:%s", m.entryID, m.entrySN, m.entrier)
+	return fmt.Sprintf("EntryUpdate - ID:%#x SN:%#x value:%s", m.entryID, m.entrySN, m.entrier)
 }
 
 func (m EntryUpdate) Entry() entryType.Entrier {

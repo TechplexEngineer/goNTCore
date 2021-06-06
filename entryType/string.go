@@ -32,6 +32,11 @@ func (s *String) GetValue() string {
 	return s.value
 }
 
+//SetValue sets the value of the entry.
+func (d *String) SetValue(val string) {
+	d.value = val
+}
+
 //MarshalEntry implements Marshaler for Network Table Entry.
 func (s *String) MarshalEntry(writer io.Writer) error {
 	valueBytes := []byte(s.value)

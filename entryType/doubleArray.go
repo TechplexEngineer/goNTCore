@@ -42,6 +42,16 @@ func (da *DoubleArray) GetValue() []float64 {
 	return out
 }
 
+//SetValue sets the value of the entry.
+func (da *DoubleArray) SetValue(val []float64) {
+	// clear out the previous values
+	da.value = make([]*Double, 1)
+
+	for _, v := range val {
+		da.value = append(da.value, NewDouble(v))
+	}
+}
+
 //MarshalEntry implements Marshaler for Network Table Entry.
 func (da *DoubleArray) MarshalEntry(writer io.Writer) error {
 	lenArray := byte(len(da.value))

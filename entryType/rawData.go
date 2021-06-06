@@ -58,6 +58,12 @@ func (rd *RawData) UnmarshalEntry(reader io.Reader) error {
 	return nil
 }
 
+//GetValue gets the value of the entry.
 func (rd *RawData) GetValue() []byte {
 	return rd.data
+}
+
+//SetValue sets the value of the entry.
+func (b *RawData) SetValue(val []byte) {
+	b.data = val
 }
