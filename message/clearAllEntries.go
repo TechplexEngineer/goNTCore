@@ -5,10 +5,9 @@
 package message
 
 import (
+	"bytes"
 	"fmt"
 	"io"
-
-	"github.com/technomancers/goNTCore/util"
 )
 
 var (
@@ -66,6 +65,6 @@ func (cae *ClearAllEntries) UnmarshalMessage(reader io.Reader) error {
 		return err
 	}
 
-	cae.valid = util.Match(cae.magic[:], clearAllMagic[:])
+	cae.valid = bytes.Compare(cae.magic[:], clearAllMagic[:]) == 0
 	return nil
 }

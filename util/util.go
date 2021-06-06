@@ -6,12 +6,13 @@ package util
 
 import (
 	"io"
+	"regexp"
 )
 
 const (
 	sevenBitMask   uint32 = 0x7f
 	mostSigBit     uint32 = 0x80
-	tableSeperator rune   = '/'
+	tableSeparator rune   = '/'
 )
 
 //EncodeULeb128 encodes the integer using the LEB128 Standard.
@@ -36,7 +37,7 @@ func EncodeULeb128(value uint32, writer io.Writer) error {
 	return err
 }
 
-//DecodeULeb128 decods from the reader using the LEB128 standard and returns a uint32 of the value it found.
+//DecodeULeb128 decodes from the reader using the LEB128 standard and returns a uint32 of the value it found.
 func DecodeULeb128(reader io.Reader) (uint32, error) {
 	var result uint32
 	var cur = [1]byte{0x80}
@@ -49,42 +50,31 @@ func DecodeULeb128(reader io.Reader) (uint32, error) {
 		if err != nil {
 			return 0, err
 		}
-		result += uint32((cur[0] & byte(sevenBitMask))) << (ctr * 7)
+		result += uint32(cur[0]&byte(sevenBitMask)) << (ctr * 7)
 		ctr++
 	}
 	return result, nil
 }
 
-//Match takes the two slices and compares them for equality
-func Match(a, b []byte) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i, ai := range a {
-		if ai != b[i] {
-			return false
-		}
-	}
-	return true
-}
+//SanitizeKey with make sure a "/" exist before the key but not after.
+func SanitizeKey(key string) string {
+	// Keys with multiple slashes into a single slash (eg. '//', '///', etc to '/')
+	re := regexp.MustCompile(`/+`)
+	key = re.ReplaceAllString(key, "/")
 
-//SanatizeKey with make sure a "/" exist before the key but not after.
-func SanatizeKey(key string) string {
+	// convert string to list of runes (characters)
 	sanitized := []rune(key)
-	if sanitized[0] != tableSeperator {
-		sanitized = append([]rune{tableSeperator}, sanitized...)
+
+	// ensure first character is '/'
+	if sanitized[0] != tableSeparator {
+		sanitized = append([]rune{tableSeparator}, sanitized...)
 	}
-	if sanitized[len(sanitized)-1] == tableSeperator {
+
+	// ensure last character is not '/'
+	if sanitized[len(sanitized)-1] == tableSeparator {
 		sanitized = sanitized[:len(sanitized)-1]
 	}
-	return string(sanitized)
-}
 
-//KeyJoin will join all the keys listed in the function together appropriatley.
-func KeyJoin(keys ...string) string {
-	var final string
-	for _, k := range keys {
-		final += SanatizeKey(k)
-	}
-	return final
+	// convert character array back to string
+	return string(sanitized)
 }

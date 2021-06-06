@@ -71,19 +71,15 @@ func (o *NetworkTable) Update(entryId uint16, entrySN uint16, entry entryType.En
 	o.lock.Lock() // lock for writing
 	defer o.lock.Unlock()
 
-	// @todo Should we optimize for writes or reads... currently optimized for reads.
+	// @todo Should we optimize for writes by ID or reads by Key... currently optimized for reads by key.
 	for k, v := range o.data {
 		if v.entryID == entryId {
 			if v.entry.Type() != entry.Type() {
 				log.Printf("Types differ. Ignoring update")
 				break
 			}
-			log.Printf("Update from:%v to:%v", v.entry, entry)
-
 			o.data[k].entrySN = entrySN
 			o.data[k].entry = entry
-
-			log.Printf("Update to:%v", o.data[k].entry)
 
 			break
 		}

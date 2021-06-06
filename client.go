@@ -251,7 +251,6 @@ func (c *Client) PutBoolean(key string, val bool) bool {
 			return false
 		}
 		e.SetValue(val)
-		log.Printf("C:%d N:%d", entry.EntrySN(), entry.EntrySN()+1)
 		msg := message.NewEntryUpdate(entry.EntryID(), entry.EntrySN()+1, e)
 		c.SendMsg(msg)
 		c.cache.Update(entry.EntryID(), entry.EntrySN()+1, e)
