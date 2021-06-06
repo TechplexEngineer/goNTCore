@@ -5,6 +5,7 @@
 package message
 
 import (
+	"encoding/binary"
 	"fmt"
 	"io"
 )
@@ -20,8 +21,8 @@ type EntryDelete struct {
 	entryID [2]byte
 }
 
-func (o EntryDelete) EntryID() [2]byte {
-	return o.entryID
+func (o EntryDelete) EntryID() uint16 {
+	return binary.LittleEndian.Uint16(o.entryID[:])
 }
 
 //NewEntryDelete creates a new instance of EntryDelete.

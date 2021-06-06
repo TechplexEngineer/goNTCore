@@ -207,7 +207,12 @@ func (c *Client) handler(msg message.Messager) {
 	case message.MTypeEntryFlagUpdate:
 		log.Print("Entry Flag Update Not Implemented")
 	case message.MTypeEntryDelete:
-		log.Print("Entry Delete Not Implemented")
+		m := msg.(*message.EntryDelete)
+		for k, v := range c.data {
+			if v.entryID == m.EntryID() {
+				delete(c.data, k)
+			}
+		}
 	case message.MTypeClearAllEntries:
 		log.Print("Clear All Entries Not Implemented")
 	case message.MTypeProtoUnsupported:
