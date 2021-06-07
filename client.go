@@ -474,5 +474,17 @@ func (c *Client) PutStringArray(key string, val []string) bool {
 	return true
 }
 
+// Listen for changes to any keys that begin with prefix
+// returns an integer handle which can be used to remove the listener
+func (c *Client) AddPrefixListener(prefix string, callback func(entry cache.TableEntry)) int {
+
+	return -1
+}
+
+// Remove a listener
+func (c *Client) RemoveListener(handle int) {
+
+}
+
 //func (c *Client) ContainsTable(key string) bool {}
 //func (c *Client) GetTable(key string) NetworkTabler {}
