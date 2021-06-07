@@ -5,6 +5,7 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/technomancers/goNTCore"
 	"log"
 	"os"
@@ -28,6 +29,10 @@ func main() {
 	time.Sleep(2 * time.Second)
 
 	c.PutBoolean("newEntry", false)
+
+	snap := c.GetSnapshot()
+	data, _ := json.MarshalIndent(snap, "", "    ")
+	log.Printf("%s", data)
 
 	ctrlc := make(chan os.Signal)
 	signal.Notify(ctrlc, os.Interrupt)

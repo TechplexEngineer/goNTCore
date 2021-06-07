@@ -1,9 +1,11 @@
 package storage
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/technomancers/goNTCore/entryType"
 	"github.com/technomancers/goNTCore/message"
+	"github.com/technomancers/goNTCore/util"
 	"log"
 	"sync"
 )
@@ -20,7 +22,7 @@ type NetworkTable struct {
 func NewNetworkTable() *NetworkTable {
 	return &NetworkTable{
 		data: make(internalData),
-		lock: &sync.RWMutex{},
+		lock: new(sync.RWMutex),
 	}
 }
 
@@ -29,7 +31,7 @@ func (o *NetworkTable) Assign(ea *message.EntryAssign) {
 	o.lock.Lock() // lock for writing
 	defer o.lock.Unlock()
 	o.data[ea.GetName()] = &StorageEntry{
-		entryName:       ea.GetName(),
+		entryName:       util.SanitizeKey(ea.GetName()),
 		entryID:         ea.EntryID(),
 		entrySN:         ea.EntrySN(),
 		entryPersistent: ea.EntryPersistent(),
@@ -55,6 +57,7 @@ func (o *NetworkTable) Update(entryId uint16, entrySN uint16, entry entryType.En
 			break
 		}
 	}
+	log.Printf("entryId %d not found, unable to update", entryId)
 }
 
 // Delete an entry from the table whose ID exactly matches entryId
@@ -82,7 +85,7 @@ func (o *NetworkTable) DeleteAll() {
 	o.data = make(internalData)
 }
 
-// Get the number of entriles in the table
+// Get the number of entries in the table
 func (o *NetworkTable) NumEntries() int {
 	o.lock.RLock() //lock for reading
 	defer o.lock.RUnlock()
@@ -109,4 +112,48 @@ func (o *NetworkTable) GetKeys() []string {
 		res = append(res, k)
 	}
 	return res
+}
+
+func (o *NetworkTable) IdToName(entryId uint16) (string, error) {
+	o.lock.RLock() //lock for reading
+	defer o.lock.RUnlock()
+	for k, v := range o.data {
+		if v.entryID == entryId {
+			return k, nil
+		}
+	}
+	return "", fmt.Errorf("inable to find id %d", entryId)
+}
+
+type SnapShotEntry struct {
+	Key          string `json:"key"`
+	Value        string `json:"value"`
+	Datatype     string `json:"type"`
+	ID           uint16 `json:"id"`
+	SN           uint16 `json:"sn"`
+	IsPersistent bool   `json:"is_persistent"`
+}
+
+func (o *NetworkTable) GetSnapshot() []SnapShotEntry {
+	keys := []SnapShotEntry{}
+	for k, v := range o.data {
+
+		valueStr := fmt.Sprintf("%#v", v.GetEntry())
+		valueByt, err := json.Marshal(v.GetEntry())
+		if err == nil {
+			valueStr = string(valueByt)
+		}
+
+		keys = append(keys, SnapShotEntry{
+			Key:          k,
+			Value:        valueStr,
+			Datatype:     v.GetEntry().Type().String(),
+			ID:           v.GetID(),
+			SN:           v.GetSN(),
+			IsPersistent: v.IsPersistent(),
+		})
+
+	}
+	return keys
+
 }

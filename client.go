@@ -8,10 +8,13 @@ import (
 	"fmt"
 	"github.com/technomancers/goNTCore/entryType"
 	"github.com/technomancers/goNTCore/storage"
+	"github.com/technomancers/goNTCore/util"
 	"io"
 	"log"
 	"net"
 	"strconv"
+	"strings"
+	"sync"
 
 	"github.com/technomancers/goNTCore/message"
 )
@@ -61,6 +64,8 @@ const (
 //	GetKeys() []string
 //}
 
+type ListenerCallback func(entry storage.StorageEntry)
+
 //Client is a Network Table client.
 type Client struct {
 	net.Conn
@@ -72,6 +77,9 @@ type Client struct {
 	// we should not modify seedData
 	// Optionally passed in to ensure the keys exist
 	seedData *storage.NetworkTable
+
+	listeners    map[int]Listener
+	listenerLock *sync.RWMutex
 }
 
 //NewClient creates a new client to communicate to a Network Table server.
@@ -85,12 +93,14 @@ func NewClient(serverHost string, name string, data *storage.NetworkTable) (*Cli
 		return nil, nil, fmt.Errorf("unable to start tcp connection - %w", err)
 	}
 	c := &Client{
-		Conn:      conn,
-		connected: true,
-		name:      name,
-		status:    ClientDisconnected,
-		storage:   storage.NewNetworkTable(),
-		seedData:  data,
+		Conn:         conn,
+		connected:    true,
+		name:         name,
+		status:       ClientDisconnected,
+		storage:      storage.NewNetworkTable(),
+		seedData:     data,
+		listeners:    map[int]Listener{},
+		listenerLock: new(sync.RWMutex),
 	}
 	echan := make(chan error, 1)
 	go c.readIncoming(echan)
@@ -162,6 +172,8 @@ func (c *Client) handler(msg message.Messager) {
 		}
 		m := msg.(*message.EntryAssign)
 		c.storage.Assign(m)
+
+		c.processListeners(m.GetName())
 	case message.MTypeServerHelloComplete:
 		// Step 4: The Server sends a Server Hello Complete message.
 		// Server is done sending entryAssigns
@@ -181,6 +193,11 @@ func (c *Client) handler(msg message.Messager) {
 	case message.MTypeEntryUpdate:
 		m := msg.(*message.EntryUpdate)
 		c.storage.Update(m.EntryID(), m.EntrySN(), m.Entry())
+
+		if name, err := c.storage.IdToName(m.EntryID()); err == nil {
+			c.processListeners(name)
+		}
+
 	case message.MTypeEntryFlagUpdate:
 		log.Print("Entry Flag Update Not Implemented")
 	case message.MTypeEntryDelete:
@@ -196,6 +213,24 @@ func (c *Client) handler(msg message.Messager) {
 		log.Printf("Unknown message type (%#x) from server", msg.Type())
 		c.Close()
 	}
+}
+
+func (c *Client) processListeners(changedKey string) {
+	c.listenerLock.RLock()
+	defer c.listenerLock.RUnlock()
+	for handle, v := range c.listeners {
+		if v.prefix {
+			if strings.HasPrefix(changedKey, v.key) {
+				entry, err := c.storage.GetEntry(changedKey)
+				if err != nil {
+					log.Printf("Key %s missing when preparing listener callback handle: %d", changedKey, handle)
+					continue
+				}
+				v.callback(entry)
+			}
+		}
+	}
+
 }
 
 //find the differences and send EntryAssign message to the server for each
@@ -497,16 +532,54 @@ func (c *Client) PutStringArray(key string, val []string) bool {
 	return true
 }
 
+func (c *Client) GetSnapshot() []storage.SnapShotEntry {
+	return c.storage.GetSnapshot()
+}
+
 // Listen for changes to any keys that begin with prefix
 // returns an integer handle which can be used to remove the listener
-func (c *Client) AddPrefixListener(prefix string, callback func(entry storage.StorageEntry)) int {
+//func (c *Client) AddPrefixListener(prefix string, callback func(entry storage.StorageEntry)) int {
+//
+//	return -1
+//}
 
-	return -1
+type Listener struct {
+	// key to listen to
+	key string
+	// callback to call
+	callback ListenerCallback
+	// do prefix matching
+	prefix bool
+}
+
+// Listen for changes to a specific key
+// returns an integer handle which can be used to remove the listener
+func (c *Client) AddKeyListener(key string, callback ListenerCallback) int {
+	key = util.SanitizeKey(key)
+	c.listenerLock.Lock() // lock for writing
+	defer c.listenerLock.Unlock()
+
+	max := 0
+	for k, _ := range c.listeners {
+		if k > max {
+			max = k
+		}
+	}
+	handle := max + 1
+	c.listeners[handle] = Listener{
+		key:      key,
+		callback: callback,
+		prefix:   false,
+	}
+
+	return handle
 }
 
 // Remove a listener
 func (c *Client) RemoveListener(handle int) {
-
+	c.listenerLock.Lock() // lock for writing
+	defer c.listenerLock.Unlock()
+	delete(c.listeners, handle)
 }
 
 //func (c *Client) ContainsTable(key string) bool {}
