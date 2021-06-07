@@ -10,9 +10,11 @@ import (
 	"io"
 )
 
-var (
-	clearAllMagic = [4]byte{0xd0, 0x6c, 0xb2, 0x7a}
-)
+// ClearAllMagic is the protocol version this package supports
+// (Since go doesn't support constant arrays as of 1.16)
+func ClearAllMagic() [4]byte {
+	return [4]byte{0xd0, 0x6c, 0xb2, 0x7a}
+}
 
 //ClearAllEntries clears all entries from the network.
 type ClearAllEntries struct {
@@ -40,7 +42,7 @@ func NewClearAllEntries() *ClearAllEntries {
 		message: message{
 			mType: MTypeClearAllEntries,
 		},
-		magic: clearAllMagic,
+		magic: ClearAllMagic(),
 		valid: true,
 	}
 }
@@ -65,6 +67,9 @@ func (cae *ClearAllEntries) UnmarshalMessage(reader io.Reader) error {
 		return err
 	}
 
-	cae.valid = bytes.Compare(cae.magic[:], clearAllMagic[:]) == 0
+	copy(cae.magic[:], buf[:4])
+
+	expectedMagic := ClearAllMagic()
+	cae.valid = bytes.Compare(cae.magic[:], expectedMagic[:]) == 0
 	return nil
 }

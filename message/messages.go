@@ -5,7 +5,7 @@
 package message
 
 import (
-	"errors"
+	"fmt"
 	"io"
 )
 
@@ -118,7 +118,7 @@ func Unmarshal(t byte, reader io.Reader) (Messager, error) {
 	case MTypeClearAllEntries:
 		msg = new(ClearAllEntries)
 	default:
-		return nil, errors.New("Unmarshal Message: Could not find appropropriate type")
+		return nil, fmt.Errorf("unmarshal message: Could not find appropropriate type")
 	}
 	err := msg.UnmarshalMessage(reader)
 	return msg, err
