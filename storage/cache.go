@@ -1,4 +1,4 @@
-package cache
+package storage
 
 import (
 	"fmt"
@@ -8,36 +8,7 @@ import (
 	"sync"
 )
 
-// An entry in the NetworkTable
-type TableEntry struct {
-	entryName       string
-	entryID         uint16 //[2]byte
-	entrySN         uint16 //[2]byte
-	entryPersistent bool
-	entry           entryType.Entrier
-}
-
-func (t TableEntry) EntryName() string {
-	return t.entryName
-}
-
-func (t TableEntry) EntryID() uint16 {
-	return t.entryID
-}
-
-func (t TableEntry) EntrySN() uint16 {
-	return t.entrySN
-}
-
-func (t TableEntry) EntryPersistent() bool {
-	return t.entryPersistent
-}
-
-func (t TableEntry) Entry() entryType.Entrier {
-	return t.entry
-}
-
-type internalData map[string]*TableEntry
+type internalData map[string]*StorageEntry
 
 // Our local view of the data that has been shared
 type NetworkTable struct {
@@ -57,7 +28,7 @@ func NewNetworkTable() *NetworkTable {
 func (o *NetworkTable) Assign(ea *message.EntryAssign) {
 	o.lock.Lock() // lock for writing
 	defer o.lock.Unlock()
-	o.data[ea.GetName()] = &TableEntry{
+	o.data[ea.GetName()] = &StorageEntry{
 		entryName:       ea.GetName(),
 		entryID:         ea.EntryID(),
 		entrySN:         ea.EntrySN(),
@@ -119,12 +90,12 @@ func (o *NetworkTable) NumEntries() int {
 }
 
 // Get a single entry from the table whose name exactly matches key
-func (o *NetworkTable) GetEntry(key string) (TableEntry, error) {
+func (o *NetworkTable) GetEntry(key string) (StorageEntry, error) {
 	o.lock.RLock() //lock for reading
 	defer o.lock.RUnlock()
 	entry, ok := o.data[key]
 	if !ok {
-		return TableEntry{}, fmt.Errorf("no entry for key: %s", key)
+		return StorageEntry{}, fmt.Errorf("no entry for key: %s", key)
 	}
 	return *entry, nil
 }
