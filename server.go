@@ -12,8 +12,8 @@ package goNTCore
 //	"net"
 //	"time"
 //
-//	"github.com/technomancers/goNTCore/message"
-//	"github.com/technomancers/goNTCore/util"
+//	"github.com/techplexengineer/gontcore/message"
+//	"github.com/techplexengineer/gontcore/util"
 //)
 //
 ////Server is an instance of a Network Table server.

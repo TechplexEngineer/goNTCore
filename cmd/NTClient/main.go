@@ -6,8 +6,8 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/technomancers/goNTCore"
-	"github.com/technomancers/goNTCore/storage"
+	"github.com/techplexengineer/gontcore"
+	"github.com/techplexengineer/gontcore/storage"
 	"log"
 	"os"
 	"os/signal"

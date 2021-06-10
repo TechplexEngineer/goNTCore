@@ -6,8 +6,8 @@ package goNTCore
 
 //
 //import (
-//	"github.com/technomancers/goNTCore/entryType"
-//	"github.com/technomancers/goNTCore/util"
+//	"github.com/techplexengineer/gontcore/entryType"
+//	"github.com/techplexengineer/gontcore/util"
 //)
 //
 ////NetworkTabler is the interface implemented by types that can read and write Network Table at a high level.

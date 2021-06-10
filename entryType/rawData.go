@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/technomancers/goNTCore/util"
+	"github.com/techplexengineer/gontcore/util"
 )
 
 //RawData is any type that is not covered in the protocole.

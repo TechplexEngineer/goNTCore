@@ -3,9 +3,9 @@ package storage
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/technomancers/goNTCore/entryType"
-	"github.com/technomancers/goNTCore/message"
-	"github.com/technomancers/goNTCore/util"
+	"github.com/techplexengineer/gontcore/entryType"
+	"github.com/techplexengineer/gontcore/message"
+	"github.com/techplexengineer/gontcore/util"
 	"log"
 	"sync"
 )

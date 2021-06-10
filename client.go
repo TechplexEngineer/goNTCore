@@ -6,9 +6,9 @@ package goNTCore
 
 import (
 	"fmt"
-	"github.com/technomancers/goNTCore/entryType"
-	"github.com/technomancers/goNTCore/storage"
-	"github.com/technomancers/goNTCore/util"
+	"github.com/techplexengineer/gontcore/entryType"
+	"github.com/techplexengineer/gontcore/storage"
+	"github.com/techplexengineer/gontcore/util"
 	"io"
 	"log"
 	"net"
@@ -16,7 +16,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/technomancers/goNTCore/message"
+	"github.com/techplexengineer/gontcore/message"
 )
 
 // ClientStatus is the enum type to represent the different

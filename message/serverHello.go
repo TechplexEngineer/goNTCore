@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/technomancers/goNTCore/entryType"
+	"github.com/techplexengineer/gontcore/entryType"
 )
 
 const (

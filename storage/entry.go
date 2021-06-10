@@ -1,6 +1,6 @@
 package storage
 
-import "github.com/technomancers/goNTCore/entryType"
+import "github.com/techplexengineer/gontcore/entryType"
 
 // An entry in the NetworkTable
 // implements the ITableEntry interface

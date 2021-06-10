@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/technomancers/goNTCore/entryType"
+	"github.com/techplexengineer/gontcore/entryType"
 )
 
 //EntryUpdate is used to tell the network that an entry has been updated.

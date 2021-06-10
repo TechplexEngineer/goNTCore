@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/technomancers/goNTCore/message"
+	"github.com/techplexengineer/gontcore/message"
 )
 
 const (

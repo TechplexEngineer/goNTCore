@@ -1,3 +1,3 @@
-module github.com/technomancers/goNTCore
+module github.com/techplexengineer/gontcore
 
 go 1.16

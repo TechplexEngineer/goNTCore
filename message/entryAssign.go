@@ -7,10 +7,10 @@ package message
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/technomancers/goNTCore/util"
+	"github.com/techplexengineer/gontcore/util"
 	"io"
 
-	"github.com/technomancers/goNTCore/entryType"
+	"github.com/techplexengineer/gontcore/entryType"
 )
 
 //EntryAssign is used to inform others that a new entry was introduced into the network.

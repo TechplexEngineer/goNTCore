@@ -4,7 +4,7 @@
 
 package entryType
 
-import "github.com/technomancers/goNTCore/util"
+import "github.com/techplexengineer/gontcore/util"
 import "io"
 
 //String is a Network Table Entry that holds the value of type string.

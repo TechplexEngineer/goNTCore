@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/technomancers/goNTCore/entryType"
+	"github.com/techplexengineer/gontcore/entryType"
 )
 
 //ClientHello is sent when a client is first communicating to a server.

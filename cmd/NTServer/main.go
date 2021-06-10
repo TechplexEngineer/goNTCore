@@ -7,7 +7,7 @@ package main
 import (
 	"time"
 
-	"github.com/technomancers/goNTCore"
+	"github.com/techplexengineer/gontcore"
 )
 
 func main() {
