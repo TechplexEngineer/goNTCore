@@ -153,6 +153,11 @@ func TestSanitizeKey(t *testing.T) {
 			"/smartdashboard",
 		},
 		{
+			"add leading 2",
+			args{"newEntry"},
+			"/newEntry",
+		},
+		{
 			"remove trailing",
 			args{"/smartdashboard/"},
 			"/smartdashboard",

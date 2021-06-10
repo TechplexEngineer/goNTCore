@@ -91,7 +91,7 @@ type Messager interface {
 }
 
 //Unmarshal takes the type passed in and tries to unmarshal the next bytes from reader based on the type.
-//It returns an instance messager.
+//It returns an instance of messager.
 func Unmarshal(t byte, reader io.Reader) (Messager, error) {
 	var msg Messager
 	switch MessageType(t) {

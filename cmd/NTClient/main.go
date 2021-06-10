@@ -7,6 +7,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/technomancers/goNTCore"
+	"github.com/technomancers/goNTCore/storage"
 	"log"
 	"os"
 	"os/signal"
@@ -19,16 +20,22 @@ func main() {
 		panic(err)
 	}
 
+	//c.Debug = true
+
+	c.AddKeyListener("newEntry", func(entry storage.StorageEntry) {
+		log.Printf("Listener: %#v", entry)
+	})
+
 	log.Printf("--- Client Started ---\n\n")
 	defer c.Close()
 
 	time.Sleep(2 * time.Second)
 
-	c.PutBoolean("newEntry", true)
-
-	time.Sleep(2 * time.Second)
-
-	c.PutBoolean("newEntry", false)
+	//c.PutBoolean("newEntry", true)
+	//
+	//time.Sleep(2 * time.Second)
+	//
+	//c.PutBoolean("newEntry", false)
 
 	snap := c.GetSnapshot()
 	data, _ := json.MarshalIndent(snap, "", "    ")

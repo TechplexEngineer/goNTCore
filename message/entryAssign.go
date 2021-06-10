@@ -7,6 +7,7 @@ package message
 import (
 	"encoding/binary"
 	"fmt"
+	"github.com/technomancers/goNTCore/util"
 	"io"
 
 	"github.com/technomancers/goNTCore/entryType"
@@ -131,7 +132,7 @@ func (ea *EntryAssign) UnmarshalMessage(reader io.Reader) error {
 }
 
 func (ea EntryAssign) GetName() string {
-	return ea.entryName.String()
+	return util.SanitizeKey(ea.entryName.String())
 }
 
 func (ea EntryAssign) Entry() entryType.Entrier {

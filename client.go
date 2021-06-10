@@ -73,6 +73,7 @@ type Client struct {
 	name      string
 	status    ClientStatus
 	storage   *storage.NetworkTable
+	Debug     bool
 
 	// we should not modify seedData
 	// Optionally passed in to ensure the keys exist
@@ -85,8 +86,8 @@ type Client struct {
 //NewClient creates a new client to communicate to a Network Table server.
 // serverHost should be an IP address or hostname eg: localhost, 127.0.0.1, roborio-4909-frc.local
 // name is used to identify this client with the networktables server. Generally want to keep it short, most implementations ignore the value
-// data is optional. One can pass a table with existing data the client wants to ensure the server has
-func NewClient(serverHost string, name string, data *storage.NetworkTable) (*Client, chan error, error) {
+// initialData is optional. One can pass a table with existing data the client wants to ensure the server has
+func NewClient(serverHost string, name string, initialData *storage.NetworkTable) (*Client, chan error, error) {
 	//log.Printf("Connecting to %s", net.JoinHostPort(serverHost, strconv.Itoa(PORT)))
 	conn, err := net.Dial("tcp", net.JoinHostPort(serverHost, strconv.Itoa(PORT)))
 	if err != nil {
@@ -98,7 +99,7 @@ func NewClient(serverHost string, name string, data *storage.NetworkTable) (*Cli
 		name:         name,
 		status:       ClientDisconnected,
 		storage:      storage.NewNetworkTable(),
-		seedData:     data,
+		seedData:     initialData,
 		listeners:    map[int]Listener{},
 		listenerLock: new(sync.RWMutex),
 	}
@@ -122,7 +123,9 @@ func (c *Client) Close() error {
 // SendMsg to the connected server
 // Users will generally want to use the higher level accessor methods Get* and Put*
 func (c *Client) SendMsg(msg message.Messager) error {
-	log.Printf("<=== Sent %s", msg)
+	if c.Debug {
+		log.Printf("<=== Sent %s", msg)
+	}
 	return SendMsg(msg, c)
 }
 
@@ -154,7 +157,9 @@ func (c *Client) startHandshake() error {
 }
 
 func (c *Client) handler(msg message.Messager) {
-	log.Printf("===> Got %s - %s", msg.Type().String(), msg)
+	if c.Debug {
+		log.Printf("===> Got %s - %s", msg.Type().String(), msg)
+	}
 	switch msg.Type() {
 	case message.MTypeKeepAlive:
 		// keep alive messages keep the underlying TCP connection open and can be ignored
@@ -216,18 +221,17 @@ func (c *Client) handler(msg message.Messager) {
 }
 
 func (c *Client) processListeners(changedKey string) {
+	changedKey = util.SanitizeKey(changedKey)
 	c.listenerLock.RLock()
 	defer c.listenerLock.RUnlock()
-	for handle, v := range c.listeners {
-		if v.prefix {
-			if strings.HasPrefix(changedKey, v.key) {
-				entry, err := c.storage.GetEntry(changedKey)
-				if err != nil {
-					log.Printf("Key %s missing when preparing listener callback handle: %d", changedKey, handle)
-					continue
-				}
-				v.callback(entry)
+	for handle, handler := range c.listeners {
+		if handler.prefix && strings.HasPrefix(changedKey, handler.key) || handler.key == changedKey {
+			entry, err := c.storage.GetEntry(changedKey)
+			if err != nil {
+				log.Printf("Key %s missing when preparing listener callback handle: %d", changedKey, handle)
+				continue
 			}
+			handler.callback(entry)
 		}
 	}
 
@@ -236,7 +240,9 @@ func (c *Client) processListeners(changedKey string) {
 //find the differences and send EntryAssign message to the server for each
 func (c *Client) notifyOfDifference() {
 	if c.seedData != nil && c.seedData.NumEntries() == 0 {
-		log.Printf(">><< Nothing to send")
+		if c.Debug {
+			log.Printf(">><< Nothing to send")
+		}
 	} else {
 		// @todo
 		//Compare c.seedData to c.data send any missing entries
@@ -554,25 +560,28 @@ type Listener struct {
 
 // Listen for changes to a specific key
 // returns an integer handle which can be used to remove the listener
+// only receives calls when the server changes the value. Local changes do not trigger the callback
 func (c *Client) AddKeyListener(key string, callback ListenerCallback) int {
 	key = util.SanitizeKey(key)
 	c.listenerLock.Lock() // lock for writing
 	defer c.listenerLock.Unlock()
 
-	max := 0
-	for k, _ := range c.listeners {
-		if k > max {
-			max = k
+	// find the highest currently used handle
+	largestHandle := 0
+	for h, _ := range c.listeners {
+		if h > largestHandle {
+			largestHandle = h
 		}
 	}
-	handle := max + 1
-	c.listeners[handle] = Listener{
+	// increment to get next handle
+	nextHandle := largestHandle + 1
+	c.listeners[nextHandle] = Listener{
 		key:      key,
 		callback: callback,
 		prefix:   false,
 	}
 
-	return handle
+	return nextHandle
 }
 
 // Remove a listener
