@@ -49,12 +49,12 @@ func (o *NetworkTable) Update(entryId uint16, entrySN uint16, entry entryType.En
 		if v.entryID == entryId {
 			if v.entry.Type() != entry.Type() {
 				log.Printf("Types differ. Ignoring update")
-				break
+				return
 			}
 			o.data[k].entrySN = entrySN
 			o.data[k].entry = entry
 
-			break
+			return
 		}
 	}
 	log.Printf("entryId %d not found, unable to update", entryId)
@@ -114,6 +114,7 @@ func (o *NetworkTable) GetKeys() []string {
 	return res
 }
 
+// Find the Name (key) for the given entry id
 func (o *NetworkTable) IdToName(entryId uint16) (string, error) {
 	o.lock.RLock() //lock for reading
 	defer o.lock.RUnlock()

@@ -30,20 +30,20 @@ func (m EntryUpdate) Entry() entryType.Entrier {
 }
 
 func (m EntryUpdate) EntrySN() uint16 {
-	return binary.LittleEndian.Uint16(m.entrySN[:])
+	return binary.BigEndian.Uint16(m.entrySN[:])
 }
 
 func (m EntryUpdate) EntryID() uint16 {
-	return binary.LittleEndian.Uint16(m.entryID[:])
+	return binary.BigEndian.Uint16(m.entryID[:])
 }
 
 //NewEntryUpdate creates a new instance on EntryUpdate.
 func NewEntryUpdate(id, sn uint16, entrier entryType.Entrier) *EntryUpdate {
 	idBuf := make([]byte, 2)
-	binary.LittleEndian.PutUint16(idBuf, id)
+	binary.BigEndian.PutUint16(idBuf, id)
 
 	snBuf := make([]byte, 2)
-	binary.LittleEndian.PutUint16(snBuf, sn)
+	binary.BigEndian.PutUint16(snBuf, sn)
 
 	eu := &EntryUpdate{
 		message: message{

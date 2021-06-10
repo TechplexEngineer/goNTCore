@@ -22,7 +22,7 @@ type EntryDelete struct {
 }
 
 func (o EntryDelete) EntryID() uint16 {
-	return binary.LittleEndian.Uint16(o.entryID[:])
+	return binary.BigEndian.Uint16(o.entryID[:])
 }
 
 //NewEntryDelete creates a new instance of EntryDelete.

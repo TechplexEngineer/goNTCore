@@ -33,11 +33,11 @@ func (o EntryAssign) EntryPersistent() bool {
 }
 
 func (o EntryAssign) EntrySN() uint16 {
-	return binary.LittleEndian.Uint16(o.entrySN[:])
+	return binary.BigEndian.Uint16(o.entrySN[:])
 }
 
 func (o EntryAssign) EntryID() uint16 {
-	return binary.LittleEndian.Uint16(o.entryID[:])
+	return binary.BigEndian.Uint16(o.entryID[:])
 }
 
 //NewEntryAssign creates a new instance on EntryAssign.
