@@ -1,14 +1,18 @@
-# ntcore
+# goNTCore
 
-> Currently under development. Help is wanted. Read TODO list below for a better understanding what needs to get done.
+GoLang implementation of the WPILib ntcore software.
 
-GoLang implementation of WPILibs ntcore package. This repository should stay private until it has been fully tested and implemented properly.
+## What is Network Tables?
+Network Tables is a network protocol for a key-value store which can be read from and 
+written to by multiple remote clients. A central server, most often running on a 
+FIRST FRC robot controller, is responsible for providing information consistency 
+and for facilitating communication between clients.
 
 ## Network Table V3
 
-To view the standards that this package follows read [NetworkTable3](https://github.com/technomancers/goNTCore/blob/master/networktables3.adoc)
+To view the standards that this package follows read [NetworkTables v3 Spec](https://github.com/wpilibsuite/allwpilib/tree/main/ntcore/doc)
 
-## TODO
+## TODO (possibly out of date)
 
 - [x] Create all the possible Entry types
   - Include a way to Marshal and Unmarshal them

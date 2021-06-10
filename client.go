@@ -220,6 +220,7 @@ func (c *Client) handler(msg message.Messager) {
 	}
 }
 
+// this should be called after any entry is added or changed
 func (c *Client) processListeners(changedKey string) {
 	changedKey = util.SanitizeKey(changedKey)
 	c.listenerLock.RLock()
