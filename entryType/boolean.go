@@ -20,6 +20,10 @@ type Boolean struct {
 	value bool
 }
 
+func (b Boolean) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("%v", b.value)), nil
+}
+
 func (b Boolean) String() string {
 	return fmt.Sprintf("%t", b.value)
 }

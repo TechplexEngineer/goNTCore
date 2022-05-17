@@ -5,6 +5,7 @@
 package entryType
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 )
@@ -13,6 +14,10 @@ import (
 type StringArray struct {
 	entry
 	value []*String
+}
+
+func (sa StringArray) MarshalJSON() ([]byte, error) {
+	return json.Marshal(sa.value)
 }
 
 func (sa StringArray) String() string {

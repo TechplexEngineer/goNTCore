@@ -18,6 +18,10 @@ type RawData struct {
 	data []byte
 }
 
+func (rd RawData) MarshalJSON() ([]byte, error) {
+	return rd.data, nil
+}
+
 func (rd RawData) String() string {
 	return fmt.Sprintf("%v", rd.data)
 }

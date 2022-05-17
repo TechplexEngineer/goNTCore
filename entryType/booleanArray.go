@@ -5,6 +5,7 @@
 package entryType
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 )
@@ -13,6 +14,10 @@ import (
 type BooleanArray struct {
 	entry
 	value []*Boolean
+}
+
+func (ba BooleanArray) MarshalJSON() ([]byte, error) {
+	return json.Marshal(ba.value)
 }
 
 func (ba BooleanArray) String() string {

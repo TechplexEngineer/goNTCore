@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/techplexengineer/gontcore/entryType"
 	"github.com/techplexengineer/gontcore/message"
@@ -127,27 +126,21 @@ func (o *NetworkTable) IdToName(entryId uint16) (string, error) {
 }
 
 type SnapShotEntry struct {
-	Key          string `json:"key"`
-	Value        string `json:"value"`
-	Datatype     string `json:"type"`
-	ID           uint16 `json:"id"`
-	SN           uint16 `json:"sn"`
-	IsPersistent bool   `json:"is_persistent"`
+	Key          string            `json:"key"`
+	Value        entryType.Entrier `json:"value"`
+	Datatype     string            `json:"type"`
+	ID           uint16            `json:"id"`
+	SN           uint16            `json:"sn"`
+	IsPersistent bool              `json:"is_persistent"`
 }
 
 func (o *NetworkTable) GetSnapshot() []SnapShotEntry {
 	keys := []SnapShotEntry{}
 	for k, v := range o.data {
 
-		valueStr := fmt.Sprintf("%#v", v.GetEntry())
-		valueByt, err := json.Marshal(v.GetEntry())
-		if err == nil {
-			valueStr = string(valueByt)
-		}
-
 		keys = append(keys, SnapShotEntry{
 			Key:          k,
-			Value:        valueStr,
+			Value:        v.GetEntry(),
 			Datatype:     v.GetEntry().Type().String(),
 			ID:           v.GetID(),
 			SN:           v.GetSN(),

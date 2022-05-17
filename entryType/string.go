@@ -4,13 +4,20 @@
 
 package entryType
 
-import "github.com/techplexengineer/gontcore/util"
+import (
+	"fmt"
+	"github.com/techplexengineer/gontcore/util"
+)
 import "io"
 
 //String is a Network Table Entry that holds the value of type string.
 type String struct {
 	entry
 	value string
+}
+
+func (o String) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf(`"%s"`, o.value)), nil
 }
 
 func (o String) String() string {

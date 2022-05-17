@@ -38,8 +38,19 @@ func main() {
 	//c.PutBoolean("newEntry", false)
 
 	snap := c.GetSnapshot()
-	data, _ := json.MarshalIndent(snap, "", "    ")
+	data, err := json.MarshalIndent(snap, "", "    ")
+	if err != nil {
+		log.Printf("ERROR: %s", err)
+	}
 	log.Printf("%s", data)
+
+	key := "/Shuffleboard/Robot Setup/Encoder LR/Zero!"
+	res := c.GetBoolean(key, false)
+	log.Printf("%s - %v", key, res)
+
+	key = "/FMSInfo/IsRedAlliance"
+	res = c.GetBoolean(key, false)
+	log.Printf("%s - %v", key, res)
 
 	ctrlc := make(chan os.Signal)
 	signal.Notify(ctrlc, os.Interrupt)

@@ -5,6 +5,7 @@
 package entryType
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 )
@@ -13,6 +14,10 @@ import (
 type DoubleArray struct {
 	entry
 	value []*Double
+}
+
+func (da DoubleArray) MarshalJSON() ([]byte, error) {
+	return json.Marshal(da.value)
 }
 
 func (da DoubleArray) String() string {

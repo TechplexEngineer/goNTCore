@@ -17,6 +17,10 @@ type Double struct {
 	value float64
 }
 
+func (d Double) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("%v", d.value)), nil
+}
+
 func (d Double) String() string {
 	return fmt.Sprintf("%f", d.value)
 }

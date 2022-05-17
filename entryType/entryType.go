@@ -74,6 +74,8 @@ type Entrier interface {
 	Marshaler
 	Unmarshaler
 	String() string
+
+	MarshalJSON() ([]byte, error)
 }
 
 //Unmarshal takes the type passed in and tries to unmarshal the next bytes from reader based on the type.
