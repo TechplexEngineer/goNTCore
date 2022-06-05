@@ -516,7 +516,7 @@ func (c *Client) GetStringArray(key string, def []string) []string {
 	return e.GetValue()
 }
 
-// Put a string array in the table.
+// PutStringArray Puts a string array in the table.
 func (c *Client) PutStringArray(key string, val []string) bool {
 	// check if the key exists, if so send update else send assign
 	entry, err := c.storage.GetEntry(key)
@@ -543,13 +543,6 @@ func (c *Client) GetSnapshot() []storage.SnapShotEntry {
 	return c.storage.GetSnapshot()
 }
 
-// Listen for changes to any keys that begin with prefix
-// returns an integer handle which can be used to remove the listener
-//func (c *Client) AddPrefixListener(prefix string, callback func(entry storage.StorageEntry)) int {
-//
-//	return -1
-//}
-
 type Listener struct {
 	// key to listen to
 	key string
@@ -559,10 +552,20 @@ type Listener struct {
 	prefix bool
 }
 
-// Listen for changes to a specific key
+// AddPrefixListener creates a Listener for changes to any keys that begin with prefix
+// returns an integer handle which can be used to remove the listener
+func (c *Client) AddPrefixListener(prefix string, callback ListenerCallback) int {
+	return c.addListener(prefix, callback, true)
+}
+
+// AddKeyListener Creates a Listener for changes to a specific key
 // returns an integer handle which can be used to remove the listener
 // only receives calls when the server changes the value. Local changes do not trigger the callback
 func (c *Client) AddKeyListener(key string, callback ListenerCallback) int {
+	return c.addListener(key, callback, false)
+}
+
+func (c *Client) addListener(key string, callback ListenerCallback, prefixMatch bool) int {
 	key = util.SanitizeKey(key)
 	c.listenerLock.Lock() // lock for writing
 	defer c.listenerLock.Unlock()
@@ -579,7 +582,7 @@ func (c *Client) AddKeyListener(key string, callback ListenerCallback) int {
 	c.listeners[nextHandle] = Listener{
 		key:      key,
 		callback: callback,
-		prefix:   false,
+		prefix:   prefixMatch,
 	}
 
 	return nextHandle
