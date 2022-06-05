@@ -113,6 +113,10 @@ func NewClient(serverHost string, name string, initialData *storage.NetworkTable
 	return c, echan, nil
 }
 
+func (c *Client) IsConnected() bool {
+	return c.connected
+}
+
 //Close closes the connection to the Network Table server.
 func (c *Client) Close() error {
 	c.connected = false
